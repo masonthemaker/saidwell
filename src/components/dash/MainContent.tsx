@@ -12,7 +12,7 @@ export default function MainContent({ isNavExpanded }: MainContentProps) {
   return (
     <main 
       className={`
-        absolute top-6 right-6 bottom-6
+        absolute top-22 right-6 bottom-6
         ${isNavExpanded ? 'left-54' : 'left-22'} 
         transition-all duration-500 ease-out
         p-6
@@ -21,7 +21,7 @@ export default function MainContent({ isNavExpanded }: MainContentProps) {
         border border-white/5
         rounded-2xl
         backdrop-saturate-150
-        overflow-y-auto
+        overflow-y-auto scrollbar-hide
       `}
     >
       <div className="space-y-6">
