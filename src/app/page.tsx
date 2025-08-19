@@ -1,11 +1,5 @@
-import Sidebar from "@/components/Sidebar";
-import ParallaxBackground from "@/components/ParallaxBackground";
+import Dashboard from "@/components/dash";
 
 export default function Home() {
-  return (
-    <div className="min-h-screen w-full bg-app-bg relative">
-      <Sidebar />
-      <ParallaxBackground />
-    </div>
-  );
+  return <Dashboard />;
 }
