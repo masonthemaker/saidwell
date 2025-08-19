@@ -10,6 +10,11 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-app-bg: #0a0a0a;
+  --color-main-accent: #f0ff47;
+  --color-hover-pink: #f9a8d4;
+  --color-hover-green: #86efac;
+  --color-hover-tan: #d2b48c;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,8 +24,27 @@
   }
 }
 
+* {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 500;
+  overflow-x: hidden;
+}
+
+/* Parallax Effect */
+.parallax-image {
+  animation: float 20s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-20px) scale(1.02);
+  }
 }
