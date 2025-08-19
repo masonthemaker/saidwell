@@ -1,6 +1,6 @@
 "use client";
 
-import { PiHouseDuotone, PiFolderSimpleDashedDuotone, PiLegoSmileyDuotone } from "react-icons/pi";
+import { PiHouseDuotone, PiFolderSimpleDashedDuotone, PiLegoSmileyDuotone, PiClockCountdownDuotone, PiArrowFatLineLeftDuotone, PiArrowFatLineRightDuotone } from "react-icons/pi";
 import { usePathname } from "next/navigation";
 import ProfileSection from "./ProfileSection";
 
@@ -14,13 +14,12 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 	const isHomeActive = pathname === "/";
 	const isAgentsActive = pathname === "/agents";
 	const isFilesActive = pathname === "/files";
+	const isHistoryActive = pathname === "/history";
 	
 	return (
 		<aside
 			aria-label="Primary navigation"
 			className={`fixed left-0 top-0 h-screen ${isExpanded ? "w-48" : "w-16"} transition-all duration-500 ease-out overflow-hidden bg-white/3 backdrop-blur-xl border-r border-white/5 flex flex-col justify-start pt-6 pb-4`}
-			onMouseEnter={() => setIsExpanded(true)}
-			onMouseLeave={() => setIsExpanded(false)}
 		>
 			{isExpanded && (
 				<div className="w-full px-2 mb-4 flex justify-center">
@@ -93,6 +92,21 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 					</li>
 					<li>
 						<button
+							aria-label="History"
+							className={`group w-full flex items-center justify-center p-2 rounded-md bg-white/5 backdrop-blur-xl border border-white/20 hover:bg-white/10 hover:border-white/30 transition-all duration-500 ease-out backdrop-saturate-150`}
+						>
+							<PiClockCountdownDuotone className={`shrink-0 transition-all duration-500 ease-out ${
+								isHistoryActive 
+									? "text-hover-pink" 
+									: "text-main-accent group-hover:text-hover-pink"
+							} ${isExpanded ? "w-4 h-4" : "w-6 h-6"}`} />
+							<span className={`transition-all duration-500 ease-out whitespace-nowrap font-semibold tracking-tight text-sm text-white overflow-hidden ${isExpanded ? "ml-2 max-w-[8rem] opacity-100" : "ml-0 max-w-0 opacity-0"}`}>
+								History
+							</span>
+						</button>
+					</li>
+					<li>
+						<button
 							aria-label="Files"
 							className={`group w-full flex items-center justify-center p-2 rounded-md bg-white/5 backdrop-blur-xl border border-white/20 hover:bg-white/10 hover:border-white/30 transition-all duration-500 ease-out backdrop-saturate-150`}
 						>
@@ -111,6 +125,26 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 
 			{/* Profile Section */}
 			<ProfileSection isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
+
+			{/* Toggle Button */}
+			<div className="mt-2 mb-2 w-full px-2">
+				<button
+					onClick={() => setIsExpanded(!isExpanded)}
+					className="group w-full flex items-center justify-center p-2 rounded-md bg-white/5 backdrop-blur-xl border border-white/20 hover:bg-white/10 hover:border-white/30 transition-all duration-500 ease-out backdrop-saturate-150"
+					aria-label={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
+				>
+					{isExpanded ? (
+						<>
+							<PiArrowFatLineLeftDuotone className="shrink-0 w-4 h-4 text-main-accent group-hover:text-hover-pink transition-all duration-500 ease-out" />
+							<span className="ml-2 transition-all duration-500 ease-out whitespace-nowrap font-semibold tracking-tight text-sm text-white overflow-hidden max-w-[8rem] opacity-100">
+								Collapse
+							</span>
+						</>
+					) : (
+						<PiArrowFatLineRightDuotone className="shrink-0 w-6 h-6 text-main-accent group-hover:text-hover-pink transition-all duration-500 ease-out" />
+					)}
+				</button>
+			</div>
 		</aside>
 	);
 }
