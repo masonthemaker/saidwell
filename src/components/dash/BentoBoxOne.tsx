@@ -1,6 +1,7 @@
 "use client";
 
 import { PiPlayDuotone } from "react-icons/pi";
+import Link from "next/link";
 
 export default function BentoBoxOne() {
   return (
@@ -118,9 +119,12 @@ export default function BentoBoxOne() {
         </div>
         
         <div className="mt-4 pt-4 border-t border-white/10">
-          <button className="w-full text-sm text-white/70 hover:text-white transition-colors duration-300">
+          <Link 
+            href="/history"
+            className="w-full text-sm text-white/70 hover:text-white transition-colors duration-300 block text-center"
+          >
             View all recordings →
-          </button>
+          </Link>
         </div>
       </div>
     </div>

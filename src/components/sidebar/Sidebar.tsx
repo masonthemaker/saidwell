@@ -2,6 +2,7 @@
 
 import { PiHouseDuotone, PiFolderSimpleDashedDuotone, PiLegoSmileyDuotone, PiClockCountdownDuotone, PiArrowFatLineLeftDuotone, PiArrowFatLineRightDuotone } from "react-icons/pi";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import ProfileSection from "./ProfileSection";
 
 interface SidebarProps {
@@ -39,7 +40,8 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 			<nav aria-label="Primary" className="w-full px-2">
 				<ul className="flex flex-col items-stretch gap-3">
 					<li>
-						<button
+						<Link
+							href="/"
 							aria-label="Home"
 							className={`group w-full flex items-center justify-center p-2 rounded-md bg-white/5 backdrop-blur-xl border border-white/20 hover:bg-white/10 hover:border-white/30 transition-all duration-500 ease-out backdrop-saturate-150`}
 						>
@@ -51,7 +53,7 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 							<span className={`transition-all duration-500 ease-out whitespace-nowrap font-semibold tracking-tight text-sm text-white overflow-hidden ${isExpanded ? "ml-2 max-w-[8rem] opacity-100" : "ml-0 max-w-0 opacity-0"}`}>
 								Home
 							</span>
-						</button>
+						</Link>
 					</li>
 				</ul>
 			</nav>
@@ -76,7 +78,8 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 			<nav aria-label="Build" className="w-full px-2 mb-4">
 				<ul className="flex flex-col items-stretch gap-3">
 					<li>
-						<button
+						<Link
+							href="/agents"
 							aria-label="Agents"
 							className={`group w-full flex items-center justify-center p-2 rounded-md bg-white/5 backdrop-blur-xl border border-white/20 hover:bg-white/10 hover:border-white/30 transition-all duration-500 ease-out backdrop-saturate-150`}
 						>
@@ -88,10 +91,11 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 							<span className={`transition-all duration-500 ease-out whitespace-nowrap font-semibold tracking-tight text-sm text-white overflow-hidden ${isExpanded ? "ml-2 max-w-[8rem] opacity-100" : "ml-0 max-w-0 opacity-0"}`}>
 								Agents
 							</span>
-						</button>
+						</Link>
 					</li>
 					<li>
-						<button
+						<Link
+							href="/history"
 							aria-label="History"
 							className={`group w-full flex items-center justify-center p-2 rounded-md bg-white/5 backdrop-blur-xl border border-white/20 hover:bg-white/10 hover:border-white/30 transition-all duration-500 ease-out backdrop-saturate-150`}
 						>
@@ -103,10 +107,11 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 							<span className={`transition-all duration-500 ease-out whitespace-nowrap font-semibold tracking-tight text-sm text-white overflow-hidden ${isExpanded ? "ml-2 max-w-[8rem] opacity-100" : "ml-0 max-w-0 opacity-0"}`}>
 								History
 							</span>
-						</button>
+						</Link>
 					</li>
 					<li>
-						<button
+						<Link
+							href="/files"
 							aria-label="Files"
 							className={`group w-full flex items-center justify-center p-2 rounded-md bg-white/5 backdrop-blur-xl border border-white/20 hover:bg-white/10 hover:border-white/30 transition-all duration-500 ease-out backdrop-saturate-150`}
 						>
@@ -118,7 +123,7 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 							<span className={`transition-all duration-500 ease-out whitespace-nowrap font-semibold tracking-tight text-sm text-white overflow-hidden ${isExpanded ? "ml-2 max-w-[8rem] opacity-100" : "ml-0 max-w-0 opacity-0"}`}>
 								Files
 							</span>
-						</button>
+						</Link>
 					</li>
 				</ul>
 			</nav>
