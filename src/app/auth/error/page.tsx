@@ -10,7 +10,7 @@ export default function AuthError() {
 
   return (
     <div className="min-h-screen w-full bg-app-bg relative flex items-center justify-center p-4">
-      <ParallaxBackground />
+      <ParallaxBackground variant="default" />
       
       <div className="relative z-10 bg-white/3 backdrop-blur-xl border border-white/5 rounded-2xl backdrop-saturate-150 p-8 w-full max-w-md">
         <div className="text-center mb-8">
