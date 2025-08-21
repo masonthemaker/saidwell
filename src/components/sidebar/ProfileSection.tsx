@@ -4,6 +4,7 @@ import { FaSignOutAlt, FaBuilding, FaUser } from "react-icons/fa";
 import { IoSettingsOutline } from "react-icons/io5";
 import { AiTwotoneMail } from "react-icons/ai";
 import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth/useAuth";
 
 interface ProfileSectionProps {
   isExpanded: boolean;
@@ -11,6 +12,20 @@ interface ProfileSectionProps {
 }
 
 export default function ProfileSection({ isExpanded, setIsExpanded }: ProfileSectionProps) {
+  const { user, signOut, isLoading } = useAuth(false);
+  
+  // Extract user info from email or use fallback
+  const userName = user?.email?.split('@')[0] || 'User';
+  const userDomain = user?.email?.split('@')[1] || 'Company';
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   return (
     <div className="mt-auto mb-2 w-full px-2 relative">
       {/* Divider above Profile - Edge to Edge */}
@@ -30,7 +45,9 @@ export default function ProfileSection({ isExpanded, setIsExpanded }: ProfileSec
         <div className="w-full bg-white/5 backdrop-blur-xl border border-white/20 rounded-xl p-3 backdrop-saturate-150">
           {/* User Info */}
           <div className="mb-3 flex items-center justify-between">
-            <div className="text-xs text-gray-300 font-medium">John Doe</div>
+            <div className="text-xs text-gray-300 font-medium">
+              {isLoading ? 'Loading...' : userName}
+            </div>
             <Link
               href="/settings"
               aria-label="Settings"
@@ -44,7 +61,9 @@ export default function ProfileSection({ isExpanded, setIsExpanded }: ProfileSec
           <div className="mb-3 flex items-center gap-2">
             <div className="flex items-center flex-1 p-2 rounded-lg bg-white/5 border border-white/10">
               <FaBuilding className="w-3 h-3 mr-2 text-main-accent" />
-              <span className="text-xs text-gray-200 font-medium">Acme Corp</span>
+              <span className="text-xs text-gray-200 font-medium">
+                {userDomain || 'Your Company'}
+              </span>
             </div>
             <button 
               aria-label="Invite"
@@ -55,9 +74,15 @@ export default function ProfileSection({ isExpanded, setIsExpanded }: ProfileSec
           </div>
 
           {/* Logout Button */}
-          <button className="w-full flex items-center p-2 rounded-lg bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all duration-500 ease-out">
+          <button 
+            onClick={handleLogout}
+            disabled={isLoading}
+            className="w-full flex items-center p-2 rounded-lg bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-500 ease-out"
+          >
             <FaSignOutAlt className="w-3 h-3 mr-2 text-red-400" />
-            <span className="text-xs text-red-400 font-medium">Logout</span>
+            <span className="text-xs text-red-400 font-medium">
+              {isLoading ? 'Logging out...' : 'Logout'}
+            </span>
           </button>
         </div>
       ) : (
