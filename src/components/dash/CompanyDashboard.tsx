@@ -6,7 +6,6 @@ import MainContent from "./MainContent";
 import TopBar from "./TopBar";
 import ParallaxBackground from "@/components/ParallaxBackground";
 import { useAuth } from "@/hooks/useAuth/useAuth";
-import AuthContextInfo from "@/components/auth/AuthContextInfo";
 
 export default function CompanyDashboard() {
   const [isNavExpanded, setIsNavExpanded] = useState(false);
@@ -23,7 +22,6 @@ export default function CompanyDashboard() {
         paddingTop: '80px'
       }}>
         <div className="p-6">
-          <AuthContextInfo />
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-white mb-2">Company Dashboard</h1>
             <p className="text-white/70">Managing {companyName} - Company Admin View</p>

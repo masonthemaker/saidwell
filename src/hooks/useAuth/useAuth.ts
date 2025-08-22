@@ -80,22 +80,37 @@ export const useAuth = (requireAuth: boolean = true) => {
         type = 'no_access';
       }
 
-      // Set default active context
+      // Check for persisted active context first
       let activeContext;
-      if (type === 'company') {
-        activeContext = {
-          type: 'company' as const,
-          id: companies[0].id,
-          name: companies[0].name,
-          slug: companies[0].slug,
-        };
-      } else if (type === 'client') {
-        activeContext = {
-          type: 'client' as const,
-          id: clients[0].id,
-          name: clients[0].name,
-          slug: clients[0].company_slug,
-        };
+      if (typeof window !== 'undefined') {
+        const savedContext = window.sessionStorage.getItem('activeContext');
+        if (savedContext) {
+          try {
+            activeContext = JSON.parse(savedContext);
+          } catch (e) {
+            window.sessionStorage.removeItem('activeContext');
+          }
+        }
+      }
+
+      // Set default active context if none saved
+      if (!activeContext) {
+        if (type === 'company') {
+          activeContext = {
+            type: 'company' as const,
+            id: companies[0].id,
+            name: companies[0].name,
+            slug: companies[0].slug,
+          };
+        } else if (type === 'client') {
+          activeContext = {
+            type: 'client' as const,
+            id: clients[0].id,
+            name: clients[0].name,
+            slug: clients[0].company_slug,
+          };
+        }
+        // For multi-access users, don't set activeContext initially - let them choose
       }
 
       return {
@@ -228,6 +243,12 @@ export const useAuth = (requireAuth: boolean = true) => {
   };
 
   const signOut = async () => {
+    // Clear persisted context
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem('activeContext');
+      window.sessionStorage.removeItem('explicit-client-route');
+    }
+    
     const { error } = await supabase.auth.signOut();
     if (!error) {
       router.push('/auth/login');
@@ -263,6 +284,14 @@ export const useAuth = (requireAuth: boolean = true) => {
     }
 
     if (activeContext) {
+      // Persist the choice in sessionStorage
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem('activeContext', JSON.stringify(activeContext));
+        if (contextType === 'client') {
+          window.sessionStorage.setItem('explicit-client-route', 'true');
+        }
+      }
+
       setAuthState(prev => ({
         ...prev,
         context: prev.context ? {

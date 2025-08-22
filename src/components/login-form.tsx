@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import TestCredentials from '@/components/auth/TestCredentials';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -13,11 +12,6 @@ export default function LoginForm() {
 
   const router = useRouter();
   const supabase = createClient();
-
-  const fillTestCredentials = (testEmail: string, testPassword: string) => {
-    setEmail(testEmail);
-    setPassword(testPassword);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +57,7 @@ export default function LoginForm() {
             console.error('Error detecting context:', contextError);
             router.push('/');
           }
-        }, 1000);
+        }, 1500);
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
@@ -123,9 +117,6 @@ export default function LoginForm() {
       >
         {isLoading ? 'Signing in...' : 'Sign In'}
       </button>
-
-      {/* Test Credentials */}
-      <TestCredentials onFillCredentials={fillTestCredentials} />
     </form>
   );
 }

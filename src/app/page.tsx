@@ -2,26 +2,36 @@
 
 import Dashboard from "@/components/dash";
 import { useAuth } from "@/hooks/useAuth/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
   const { isLoading, contextLoading, context } = useAuth(true);
   const router = useRouter();
+  const [hasRouted, setHasRouted] = useState(false);
 
   useEffect(() => {
-    // Auto-route based on context once loaded
-    if (!isLoading && !contextLoading && context) {
+    // Only auto-route on initial load, not when user explicitly navigates to /
+    const isInitialLoad = !hasRouted && typeof window !== 'undefined' && !window.sessionStorage.getItem('explicit-client-route');
+    
+    if (!isLoading && !contextLoading && context && isInitialLoad) {
+      // If user has only company access, redirect to company dashboard
       if (context.type === 'company') {
-        // Company-only user, redirect to company dashboard
+        setHasRouted(true);
         router.push(`/company/${context.companies[0].slug}`);
-      } else if (context.type === 'multi') {
-        // Multi-access user, redirect to selection
-        router.push('/dashboard/select-context');
+        return;
       }
-      // For 'client' type, stay on this page (current behavior)
+      
+      // If user has multi-access and no active context, go to selection
+      if (context.type === 'multi' && !context.activeContext) {
+        setHasRouted(true);
+        router.push('/dashboard/select-context');
+        return;
+      }
+      
+      // For client-only or when active context is client, stay here
     }
-  }, [isLoading, contextLoading, context, router]);
+  }, [isLoading, contextLoading, context?.type, context?.activeContext?.type, hasRouted, router]);
 
   if (isLoading || contextLoading) {
     return (

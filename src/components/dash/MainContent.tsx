@@ -3,7 +3,6 @@
 import { ChartAreaInteractive } from "@/components/charts/ChartAreaInteractive";
 import BentoBoxOne from "./BentoBoxOne";
 import BentoBoxTwo from "./BentoBoxTwo";
-import AuthContextInfo from "@/components/auth/AuthContextInfo";
 
 interface MainContentProps {
   isNavExpanded: boolean;
@@ -26,9 +25,6 @@ export default function MainContent({ isNavExpanded }: MainContentProps) {
       `}
     >
       <div className="space-y-6">
-        {/* Auth Context Info for Testing */}
-        <AuthContextInfo />
-        
         {/* Chart at the top */}
         <ChartAreaInteractive />
         

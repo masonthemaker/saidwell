@@ -14,10 +14,19 @@ export default function SelectContextPage() {
     );
   }
 
-  if (!context || context.type !== 'multi') {
+  if (!context) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg font-medium text-red-500">Invalid access state</div>
+        <div className="text-lg font-medium text-red-500">No context available</div>
+      </div>
+    );
+  }
+
+  // Allow access if user has multi-access OR if they navigated here directly
+  if (context.type !== 'multi' && context.companies.length === 0 && context.clients.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg font-medium text-red-500">No access permissions found</div>
       </div>
     );
   }
@@ -92,13 +101,7 @@ export default function SelectContextPage() {
           )}
         </div>
 
-        {/* Testing Info */}
-        <div className="mt-8 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-          <h3 className="text-sm font-medium text-blue-300 mb-2">Testing Info</h3>
-          <p className="text-xs text-blue-200/70">
-            Context Type: {context.type} | Companies: {context.companies.length} | Clients: {context.clients.length}
-          </p>
-        </div>
+
       </div>
       <ParallaxBackground />
     </div>
