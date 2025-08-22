@@ -24,6 +24,9 @@ export default function SignUpForm() {
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/confirm`,
+          data: {
+            redirect_to: '/', // Where to redirect after successful confirmation
+          }
         },
       });
 
