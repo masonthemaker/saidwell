@@ -34,7 +34,7 @@ export default function UpdatePasswordForm() {
       } else {
         router.push('/');
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PiUserDuotone, PiLockDuotone, PiEnvelopeDuotone, PiEyeDuotone, PiEyeSlashDuotone } from "react-icons/pi";
+import { PiLockDuotone, PiEnvelopeDuotone, PiEyeDuotone, PiEyeSlashDuotone } from "react-icons/pi";
 
 export default function AccountSettings() {
   const [emailSettings, setEmailSettings] = useState({

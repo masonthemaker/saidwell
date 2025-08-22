@@ -35,7 +35,7 @@ export default function SignUpForm() {
       } else {
         router.push('/auth/sign-up-success');
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);

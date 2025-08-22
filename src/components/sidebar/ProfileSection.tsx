@@ -8,10 +8,9 @@ import { useAuth } from "@/hooks/useAuth/useAuth";
 
 interface ProfileSectionProps {
   isExpanded: boolean;
-  setIsExpanded: (expanded: boolean) => void;
 }
 
-export default function ProfileSection({ isExpanded, setIsExpanded }: ProfileSectionProps) {
+export default function ProfileSection({ isExpanded }: ProfileSectionProps) {
   const { user, signOut, isLoading } = useAuth(false);
   
   // Extract user info from email or use fallback

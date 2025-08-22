@@ -137,7 +137,7 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 			)}
 
 			{/* Profile Section */}
-			<ProfileSection isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
+			<ProfileSection isExpanded={isExpanded} />
 
 			{/* Toggle Button */}
 			<div className="mt-2 mb-2 w-full px-2">

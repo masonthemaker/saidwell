@@ -31,7 +31,7 @@ export default function Home() {
       
       // For client-only or when active context is client, stay here
     }
-  }, [isLoading, contextLoading, context?.type, context?.activeContext?.type, hasRouted, router]);
+  }, [isLoading, contextLoading, context, hasRouted, router]);
 
   if (isLoading || contextLoading) {
     return (

@@ -80,7 +80,7 @@ export default function ConfirmationModal({
                 <h3 className="text-lg font-semibold text-white/90">{title}</h3>
                 {itemName && (
                   <p className="text-sm text-white/60 mt-1">
-                    <span className="font-medium text-white/80">"{itemName}"</span>
+                    <span className="font-medium text-white/80">&quot;{itemName}&quot;</span>
                   </p>
                 )}
               </div>

@@ -27,7 +27,7 @@ export default function ForgotPasswordForm() {
       } else {
         setMessage('Check your email for a password reset link.');
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -44,7 +44,7 @@ export default function ForgotPasswordForm() {
         </div>
         <p className="text-grassy-green font-medium mb-4">{message}</p>
         <p className="text-white/60 text-sm">
-          If you don't see the email in your inbox, check your spam folder.
+          If you don&apos;t see the email in your inbox, check your spam folder.
         </p>
       </div>
     );
@@ -66,7 +66,7 @@ export default function ForgotPasswordForm() {
           required
         />
         <p className="text-xs text-white/40 mt-1">
-          We'll send a password reset link to this email address
+          We&apos;ll send a password reset link to this email address
         </p>
       </div>
 

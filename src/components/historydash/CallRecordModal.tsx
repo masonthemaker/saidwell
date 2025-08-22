@@ -20,7 +20,7 @@ interface CallRecordModalProps {
 
 export default function CallRecordModal({ isOpen, onClose, record, transcript = [] }: CallRecordModalProps) {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState("00:00");
+  const [currentTime] = useState("00:00");
 
   if (!isOpen || !record) return null;
 

@@ -18,7 +18,7 @@ export default function BentoBoxOne() {
               </p>
             </div>
             <div className="text-right">
-              <div className="text-xs text-white/50 mb-1">Today's Total</div>
+              <div className="text-xs text-white/50 mb-1">Today&apos;s Total</div>
               <div className="text-lg font-bold text-[var(--color-main-accent)]">$47.23</div>
             </div>
           </div>
