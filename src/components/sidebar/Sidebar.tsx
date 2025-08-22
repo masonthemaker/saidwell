@@ -1,10 +1,11 @@
 "use client";
 
-import { PiHouseDuotone, PiFolderSimpleDashedDuotone, PiLegoSmileyDuotone, PiClockCountdownDuotone, PiArrowFatLineLeftDuotone, PiArrowFatLineRightDuotone } from "react-icons/pi";
+import { PiHouseDuotone, PiFolderSimpleDashedDuotone, PiLegoSmileyDuotone, PiClockCountdownDuotone, PiArrowFatLineLeftDuotone, PiArrowFatLineRightDuotone, PiAddressBookDuotone } from "react-icons/pi";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import ProfileSection from "./ProfileSection";
 import ContextSwitcher from "@/components/auth/ContextSwitcher";
+import { useAuth } from "@/hooks/useAuth/useAuth";
 
 interface SidebarProps {
 	isExpanded: boolean;
@@ -13,10 +14,15 @@ interface SidebarProps {
 
 export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 	const pathname = usePathname();
-	const isHomeActive = pathname === "/";
+	const { context } = useAuth();
+	const isCompanyContext = (context?.activeContext?.type ?? context?.type) === 'company';
+	const companySlug = isCompanyContext ? (context?.activeContext?.slug || context?.companies?.[0]?.slug) : null;
+	const homeHref = isCompanyContext && companySlug ? `/company/${companySlug}` : "/";
+	const isHomeActive = pathname === homeHref;
 	const isAgentsActive = pathname === "/agents";
 	const isFilesActive = pathname === "/files";
 	const isHistoryActive = pathname === "/history";
+	const isCompanyClientsActive = isCompanyContext && companySlug ? pathname.startsWith(`/company/${companySlug}/clients`) : false;
 	
 	return (
 		<aside
@@ -42,7 +48,7 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 				<ul className="flex flex-col items-stretch gap-3">
 					<li>
 						<Link
-							href="/"
+							href={homeHref}
 							aria-label="Home"
 							className={`group w-full flex items-center justify-center p-2 rounded-md bg-white/5 backdrop-blur-xl border border-white/20 hover:bg-white/10 hover:border-white/30 transition-all duration-500 ease-out backdrop-saturate-150`}
 						>
@@ -128,6 +134,30 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 					</li>
 				</ul>
 			</nav>
+
+			{/* Company-specific Navigation */}
+			{isCompanyContext && companySlug && (
+				<nav aria-label="Company" className="w-full px-2 mb-4">
+					<ul className="flex flex-col items-stretch gap-3">
+						<li>
+							<Link
+								href={`/company/${companySlug}/clients`}
+								aria-label="Clients"
+								className={`group w-full flex items-center justify-center p-2 rounded-md bg-white/5 backdrop-blur-xl border border-white/20 hover:bg-white/10 hover:border-white/30 transition-all duration-500 ease-out backdrop-saturate-150`}
+							>
+								<PiAddressBookDuotone className={`shrink-0 transition-all duration-500 ease-out ${
+									isCompanyClientsActive 
+										? "text-hover-pink" 
+										: "text-main-accent group-hover:text-hover-pink"
+								} ${isExpanded ? "w-4 h-4" : "w-6 h-6"}`} />
+								<span className={`transition-all duration-500 ease-out whitespace-nowrap font-semibold tracking-tight text-sm text-white overflow-hidden ${isExpanded ? "ml-2 max-w-[8rem] opacity-100" : "ml-0 max-w-0 opacity-0"}`}>
+									Clients
+								</span>
+							</Link>
+						</li>
+					</ul>
+				</nav>
+			)}
 
 			{/* Context Switcher */}
 			{isExpanded && (
