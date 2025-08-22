@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { type NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url)
+  const { searchParams } = new URL(request.url)
   
   // Handle different Supabase email confirmation parameter formats
   const token_hash = searchParams.get('token_hash')

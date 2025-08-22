@@ -17,12 +17,12 @@ export default function SignUpSuccess() {
           
           <h1 className="text-3xl font-bold text-white/90 mb-2">Check Your Email</h1>
           <p className="text-white/60 mb-6">
-            We've sent you a confirmation link. Please check your email and click the link to activate your account.
+            We&apos;ve sent you a confirmation link. Please check your email and click the link to activate your account.
           </p>
           
           <div className="space-y-4">
             <p className="text-sm text-white/40">
-              Didn't receive the email? Check your spam folder or try signing up again.
+              Didn&apos;t receive the email? Check your spam folder or try signing up again.
             </p>
             
             <a 

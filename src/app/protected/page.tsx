@@ -2,7 +2,8 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState } from 'react';
-import LogoutButton from '@/components/logout-button';
+import Link from 'next/link';
+import LogoutButton from '@/components/auth/logout-button';
 import ParallaxBackground from '@/components/ParallaxBackground';
 import type { User } from '@supabase/supabase-js';
 
@@ -57,12 +58,12 @@ export default function ProtectedPage() {
           <div className="mt-6 pt-6 border-t border-white/10">
             <h2 className="text-lg font-medium text-white/90 mb-2">Navigation</h2>
             <div className="flex gap-4">
-              <a 
+              <Link 
                 href="/"
                 className="bg-main-accent/20 hover:bg-main-accent/30 text-main-accent border border-main-accent/20 hover:border-main-accent/40 font-medium py-2 px-4 rounded-lg transition-all duration-300 ease-out backdrop-blur-sm"
               >
                 Dashboard
-              </a>
+              </Link>
               <a 
                 href="/files"
                 className="bg-white/10 hover:bg-white/20 text-white/90 border border-white/20 hover:border-white/30 font-medium py-2 px-4 rounded-lg transition-all duration-300 ease-out backdrop-blur-sm"

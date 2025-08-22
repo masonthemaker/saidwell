@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Sidebar from "@/components/sidebar/Sidebar";
-import MainContent from "./MainContent";
 import TopBar from "./TopBar";
 import ParallaxBackground from "@/components/ParallaxBackground";
 import { useAuth } from "@/hooks/useAuth/useAuth";

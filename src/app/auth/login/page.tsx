@@ -1,6 +1,6 @@
 'use client';
 
-import LoginForm from '@/components/login-form';
+import LoginForm from '@/components/auth/login-form';
 import ParallaxBackground from '@/components/ParallaxBackground';
 
 export default function Login() {
@@ -18,7 +18,7 @@ export default function Login() {
         
         <div className="mt-6 text-center">
           <p className="text-sm text-white/60">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <a href="/auth/sign-up" className="text-main-accent hover:text-hover-pink font-medium transition-all duration-300 ease-out">
               Sign up
             </a>

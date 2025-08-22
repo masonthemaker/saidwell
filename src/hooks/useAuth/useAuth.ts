@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
@@ -58,7 +58,7 @@ export const useAuth = (requireAuth: boolean = true) => {
   const supabase = createClient();
 
   // Detect user context (company vs client access)
-  const detectUserContext = async (): Promise<UserContext> => {
+  const detectUserContext = useCallback(async (): Promise<UserContext> => {
     try {
       const [companiesResult, clientsResult] = await Promise.all([
         supabase.from('v_my_companies').select('*'),
@@ -87,7 +87,7 @@ export const useAuth = (requireAuth: boolean = true) => {
         if (savedContext) {
           try {
             activeContext = JSON.parse(savedContext);
-          } catch (e) {
+          } catch {
             window.sessionStorage.removeItem('activeContext');
           }
         }
@@ -127,7 +127,7 @@ export const useAuth = (requireAuth: boolean = true) => {
         clients: [],
       };
     }
-  };
+  }, [supabase]);
 
   useEffect(() => {
     const getSession = async () => {
@@ -223,7 +223,7 @@ export const useAuth = (requireAuth: boolean = true) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [requireAuth, router, supabase.auth]);
+  }, [requireAuth, router, supabase.auth, detectUserContext]);
 
   // Helper functions for authentication actions
   const signIn = async (email: string, password: string) => {
