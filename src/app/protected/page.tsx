@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState } from 'react';
-import LogoutButton from '@/components/logout-button';
+import LogoutButton from '@/components/auth/logout-button';
 import ParallaxBackground from '@/components/ParallaxBackground';
 import type { User } from '@supabase/supabase-js';
 

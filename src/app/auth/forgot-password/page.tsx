@@ -1,6 +1,6 @@
 'use client';
 
-import ForgotPasswordForm from '@/components/forgot-password-form';
+import ForgotPasswordForm from '@/components/auth/forgot-password-form';
 import ParallaxBackground from '@/components/ParallaxBackground';
 
 export default function ForgotPassword() {
