@@ -4,6 +4,7 @@ import { PiHouseDuotone, PiFolderSimpleDashedDuotone, PiLegoSmileyDuotone, PiClo
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import ProfileSection from "./ProfileSection";
+import ContextSwitcher from "@/components/auth/ContextSwitcher";
 
 interface SidebarProps {
 	isExpanded: boolean;
@@ -127,6 +128,13 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 					</li>
 				</ul>
 			</nav>
+
+			{/* Context Switcher */}
+			{isExpanded && (
+				<div className="mt-auto mb-4 px-2">
+					<ContextSwitcher />
+				</div>
+			)}
 
 			{/* Profile Section */}
 			<ProfileSection isExpanded={isExpanded} setIsExpanded={setIsExpanded} />

@@ -27,7 +27,37 @@ export default function LoginForm() {
       if (error) {
         setError(error.message);
       } else {
-        router.push('/');
+        // Wait a moment for auth state to update, then detect context
+        setTimeout(async () => {
+          try {
+            const [companiesResult, clientsResult] = await Promise.all([
+              supabase.from('v_my_companies').select('*'),
+              supabase.from('v_my_clients').select('*')
+            ]);
+
+            const companies = companiesResult.data || [];
+            const clients = clientsResult.data || [];
+
+            // Route based on access
+            if (companies.length > 0 && clients.length > 0) {
+              // Multi-access - go to selection page
+              router.push('/dashboard/select-context');
+            } else if (companies.length > 0) {
+              // Company only
+              router.push(`/company/${companies[0].slug}`);
+            } else if (clients.length > 0) {
+              // Client only  
+              router.push('/');
+            } else {
+              // No access
+              setError('No access permissions found. Please contact your administrator.');
+              await supabase.auth.signOut();
+            }
+          } catch (contextError) {
+            console.error('Error detecting context:', contextError);
+            router.push('/');
+          }
+        }, 1500);
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');

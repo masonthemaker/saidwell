@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #1a1a1a; font-family: Arial, sans-serif;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #1a1a1a;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 500px; background-color: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 12px; padding: 32px;">
+                    <tr>
+                        <td align="center" style="padding-bottom: 24px;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">Welcome to SaidWell!</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding-bottom: 24px;">
+                            <p style="margin: 0; color: #cccccc; font-size: 16px; line-height: 1.5;">
+                                Thanks for signing up! Please confirm your email address to get started.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding-bottom: 32px;">
+                            <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/" 
+                               style="display: inline-block; background-color: #f0ff47; color: #1a1a1a; font-weight: bold; font-size: 16px; padding: 12px 24px; border-radius: 6px; text-decoration: none;">
+                                Confirm Email Address
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-top: 20px; border-top: 1px solid #3a3a3a;">
+                            <p style="margin: 0 0 16px 0; color: #999999; font-size: 14px;">
+                                If the button doesn't work, copy and paste this link:
+                            </p>
+                            <p style="margin: 0 0 16px 0; word-break: break-all;">
+                                <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/" 
+                                   style="color: #f0ff47; font-size: 12px;">
+                                    {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/
+                                </a>
+                            </p>
+                            <p style="margin: 0; color: #888888; font-size: 12px;">
+                                This link expires in 24 hours. If you didn't sign up for SaidWell, you can ignore this email.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
