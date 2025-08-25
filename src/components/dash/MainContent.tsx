@@ -3,12 +3,15 @@
 import { ChartAreaInteractive } from "@/components/charts/ChartAreaInteractive";
 import BentoBoxOne from "./BentoBoxOne";
 import BentoBoxTwo from "./BentoBoxTwo";
+import useAuth from "@/hooks/use-auth";
 
 interface MainContentProps {
   isNavExpanded: boolean;
 }
 
 export default function MainContent({ isNavExpanded }: MainContentProps) {
+  // Trigger auth inspection logs in the console
+  useAuth();
   return (
     <main 
       className={`
