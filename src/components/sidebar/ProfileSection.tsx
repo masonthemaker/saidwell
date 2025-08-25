@@ -1,6 +1,7 @@
 "use client";
 
 import { FaSignOutAlt, FaBuilding, FaUser } from "react-icons/fa";
+import { LogoutButton } from "@/components/logout-button";
 import { IoSettingsOutline } from "react-icons/io5";
 import { AiTwotoneMail } from "react-icons/ai";
 import Link from "next/link";
@@ -55,10 +56,9 @@ export default function ProfileSection({ isExpanded, setIsExpanded }: ProfileSec
           </div>
 
           {/* Logout Button */}
-          <button className="w-full flex items-center p-2 rounded-lg bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all duration-500 ease-out">
-            <FaSignOutAlt className="w-3 h-3 mr-2 text-red-400" />
-            <span className="text-xs text-red-400 font-medium">Logout</span>
-          </button>
+          <div className="w-full">
+            <LogoutButton />
+          </div>
         </div>
       ) : (
         /* Collapsed Profile Button */
