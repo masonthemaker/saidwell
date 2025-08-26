@@ -1,23 +1,43 @@
 "use client";
 
 import { PiPlayDuotone, PiDownloadDuotone, PiClockDuotone, PiPhoneDuotone } from "react-icons/pi";
-
-export interface CallRecordData {
-  id: number;
-  title: string;
-  type: string;
-  status: string;
-  duration: string;
-  caller: string;
-  cost: string;
-  date: string;
-  agent: string;
-}
+import { CallWithDetails } from "@/hooks/use-calls";
 
 interface CallRecordProps {
-  record: CallRecordData;
-  onView?: (recordId: number) => void;
-  onDownload?: (recordId: number) => void;
+  record: CallWithDetails;
+  onView?: (recordId: string) => void;
+  onDownload?: (recordId: string) => void;
+}
+
+// Helper function to format date
+function formatCallDate(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  
+  const isToday = date.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = date.toDateString() === yesterday.toDateString();
+  
+  const timeStr = date.toLocaleTimeString('en-US', { 
+    hour: 'numeric', 
+    minute: '2-digit', 
+    hour12: true 
+  });
+  
+  if (isToday) {
+    return `Today, ${timeStr}`;
+  } else if (isYesterday) {
+    return `Yesterday, ${timeStr}`;
+  } else {
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  }
 }
 
 export default function CallRecord({ record, onView, onDownload }: CallRecordProps) {
@@ -54,13 +74,16 @@ export default function CallRecord({ record, onView, onDownload }: CallRecordPro
   const handlePlayClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     // Play functionality will be handled in the modal
-    console.log(`Play clicked for record ${record.id}`);
   };
 
   const handleDownloadClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onDownload?.(record.id);
   };
+
+  // Get caller info (prefer name over phone)
+  const callerInfo = record.caller_name || record.caller_phone || 'Unknown Caller';
+  const formattedDate = formatCallDate(record.created_at);
 
   return (
     <div 
@@ -82,20 +105,20 @@ export default function CallRecord({ record, onView, onDownload }: CallRecordPro
           <div className="flex items-center gap-6 text-sm text-white/60 mb-2">
             <div className="flex items-center gap-2">
               <PiClockDuotone className="w-4 h-4" />
-              <span>Duration: {record.duration}</span>
+              <span>Duration: {record.duration_display || `${Math.floor(record.duration_seconds / 60)}:${(record.duration_seconds % 60).toString().padStart(2, '0')}`}</span>
             </div>
             <div className="flex items-center gap-2">
               <PiPhoneDuotone className="w-4 h-4" />
-              <span>{record.type === 'Outbound' ? 'Client' : 'Caller'}: {record.caller}</span>
+              <span>{record.type === 'Outbound' ? 'Client' : 'Caller'}: {callerInfo}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="px-2 py-1 text-xs bg-white/10 text-white/80 border border-white/20 rounded-full">
-                Cost: {record.cost}
+                Cost: {record.cost_display || `$${((record.cost_cents || 0) / 100).toFixed(2)}`}
               </span>
             </div>
           </div>
           
-          <div className="text-xs text-white/50">{record.date} • Agent: {record.agent}</div>
+          <div className="text-xs text-white/50">{formattedDate} • Agent: {record.agent_name}</div>
         </div>
         
         <div className="flex items-center gap-2 ml-4">
