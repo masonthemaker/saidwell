@@ -2,12 +2,20 @@ import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Session, User } from '@supabase/supabase-js'
 
+type UserClient = {
+  client_id: string
+  client_name: string
+  company_id: string
+  role: string
+}
+
 type UseAuthReturn = {
   isLoading: boolean
   session: Session | null
   user: User | null
   accessToken: string | null
   refresh: () => Promise<void>
+  // Company-level memberships and roles
   memberships: Array<{ company_id: string; role: string }>
   roles: string[]
   hasRole: (requiredRole: string) => boolean
@@ -15,6 +23,14 @@ type UseAuthReturn = {
   isAdmin: () => boolean
   isUser: () => boolean
   isClient: () => boolean
+  // Client-level relationships
+  userClients: UserClient[]
+  clientRoles: string[]
+  hasClientRole: (requiredRole: string) => boolean
+  isClientAdmin: () => boolean
+  isClientMember: () => boolean
+  getCurrentClient: () => UserClient | null
+  setCurrentClient: (clientId: string) => void
 }
 
 export function useAuth(): UseAuthReturn {
@@ -26,6 +42,9 @@ export function useAuth(): UseAuthReturn {
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [memberships, setMemberships] = useState<Array<{ company_id: string; role: string }>>([])
   const [roles, setRoles] = useState<string[]>([])
+  const [userClients, setUserClients] = useState<UserClient[]>([])
+  const [clientRoles, setClientRoles] = useState<string[]>([])
+  const [currentClient, setCurrentClientState] = useState<UserClient | null>(null)
 
   const decodeJwt = (token: string | null) => {
     if (!token) return null
@@ -52,8 +71,6 @@ export function useAuth(): UseAuthReturn {
       .eq('user_id', userId)
 
     if (error) {
-      // eslint-disable-next-line no-console
-      console.error('[useAuth] memberships query failed', error)
       setMemberships([])
       setRoles([])
       return
@@ -62,13 +79,72 @@ export function useAuth(): UseAuthReturn {
     const uniqueRoles = Array.from(new Set((data ?? []).map(m => m.role)))
     setMemberships(data ?? [])
     setRoles(uniqueRoles)
+  }
 
-    // eslint-disable-next-line no-console
-    console.log(
-      '%c[useAuth] MEMBERSHIP ROLES',
-      'background:#0b3d2e;color:#fff;font-weight:800;padding:2px 6px;border-radius:4px;',
-      { roles: uniqueRoles, memberships: data }
-    )
+  const loadUserClients = async (userId: string | undefined) => {
+    if (!userId) {
+      setUserClients([])
+      setClientRoles([])
+      setCurrentClientState(null)
+      return
+    }
+
+    // First, get user-client relationships
+    const { data: userClientData, error: userClientError } = await supabase
+      .from('user_clients')
+      .select('client_id, role')
+      .eq('user_id', userId)
+
+    if (userClientError) {
+      setUserClients([])
+      setClientRoles([])
+      setCurrentClientState(null)
+      return
+    }
+
+    if (!userClientData || userClientData.length === 0) {
+      setUserClients([])
+      setClientRoles([])
+      setCurrentClientState(null)
+      return
+    }
+
+    // Then get client details separately to avoid circular policy issues
+    const clientIds = userClientData.map(uc => uc.client_id)
+    const { data: clientDetails, error: clientsError } = await supabase
+      .from('clients')
+      .select('id, name, company_id')
+      .in('id', clientIds)
+
+    if (clientsError) {
+      setUserClients([])
+      setClientRoles([])
+      setCurrentClientState(null)
+      return
+    }
+
+    // Combine the data
+    const clientsData: UserClient[] = userClientData
+      .map(uc => {
+        const client = clientDetails?.find(c => c.id === uc.client_id)
+        if (!client) return null
+        return {
+          client_id: uc.client_id,
+          client_name: client.name,
+          company_id: client.company_id,
+          role: uc.role
+        }
+      })
+      .filter(Boolean) as UserClient[]
+
+    const uniqueClientRoles = Array.from(new Set(clientsData.map(c => c.role)))
+    setUserClients(clientsData)
+    setClientRoles(uniqueClientRoles)
+
+    // Set first client as current if none selected
+    if (clientsData.length > 0 && !currentClient) {
+      setCurrentClientState(clientsData[0])
+    }
   }
 
   const load = async () => {
@@ -81,27 +157,7 @@ export function useAuth(): UseAuthReturn {
       setUser(currentSession?.user ?? null)
       setAccessToken(currentSession?.access_token ?? null)
       await loadMemberships(currentSession?.user?.id)
-
-      const claims = decodeJwt(currentSession?.access_token ?? null)
-
-      // Initial debug log (sanitized)
-      // eslint-disable-next-line no-console
-      console.log('[useAuth] session', {
-        expires_at: currentSession?.expires_at,
-        user: {
-          id: currentSession?.user?.id,
-          email: currentSession?.user?.email,
-          role: (currentSession as any)?.user?.role,
-        },
-      })
-      // eslint-disable-next-line no-console
-      console.log('[useAuth] claims (decoded)', claims)
-      // eslint-disable-next-line no-console
-      console.log(
-        '%c[useAuth] CLAIMS',
-        'background:#111;color:#fff;font-weight:800;padding:2px 6px;border-radius:4px;',
-        claims
-      )
+      await loadUserClients(currentSession?.user?.id)
     } finally {
       setIsLoading(false)
     }
@@ -115,24 +171,7 @@ export function useAuth(): UseAuthReturn {
       setUser(newSession?.user ?? null)
       setAccessToken(newSession?.access_token ?? null)
       void loadMemberships(newSession?.user?.id)
-
-      const claims = decodeJwt(newSession?.access_token ?? null)
-      // eslint-disable-next-line no-console
-      console.log('[useAuth] auth state changed', _event, {
-        expires_at: newSession?.expires_at,
-        user: {
-          id: newSession?.user?.id,
-          email: newSession?.user?.email,
-          role: (newSession as any)?.user?.role,
-        },
-        claims,
-      })
-      // eslint-disable-next-line no-console
-      console.log(
-        '%c[useAuth] CLAIMS',
-        'background:#111;color:#fff;font-weight:800;padding:2px 6px;border-radius:4px;',
-        claims
-      )
+      void loadUserClients(newSession?.user?.id)
     })
 
     return () => {
@@ -146,6 +185,7 @@ export function useAuth(): UseAuthReturn {
     user,
     accessToken,
     refresh: load,
+    // Company-level memberships and roles
     memberships,
     roles,
     hasRole: (requiredRole: string) => roles.includes(requiredRole),
@@ -153,6 +193,19 @@ export function useAuth(): UseAuthReturn {
     isAdmin: () => roles.includes('admin'),
     isUser: () => roles.includes('member') || roles.includes('user'),
     isClient: () => roles.includes('client'),
+    // Client-level relationships
+    userClients,
+    clientRoles,
+    hasClientRole: (requiredRole: string) => clientRoles.includes(requiredRole),
+    isClientAdmin: () => clientRoles.includes('admin'),
+    isClientMember: () => clientRoles.includes('member'),
+    getCurrentClient: () => currentClient,
+    setCurrentClient: (clientId: string) => {
+      const client = userClients.find(c => c.client_id === clientId)
+      if (client) {
+        setCurrentClientState(client)
+      }
+    },
   }
 }
 
