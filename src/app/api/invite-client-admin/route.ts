@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
           client_name: clientName,
           role: 'admin'
         },
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/login`
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/join`
       }
     )
 
