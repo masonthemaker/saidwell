@@ -1,14 +1,43 @@
 "use client";
 
-import { PiHouseDuotone, PiFolderSimpleDashedDuotone, PiLegoSmileyDuotone, PiClockCountdownDuotone, PiArrowFatLineLeftDuotone, PiArrowFatLineRightDuotone } from "react-icons/pi";
+import { PiHouseDuotone, PiFolderSimpleDashedDuotone, PiLegoSmileyDuotone, PiClockCountdownDuotone, PiArrowFatLineLeftDuotone, PiArrowFatLineRightDuotone, PiSignOutDuotone } from "react-icons/pi";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import ProfileSection from "./ProfileSection";
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 import useAuth from "@/hooks/use-auth";
 
 interface SidebarProps {
 	isExpanded: boolean;
 	setIsExpanded: (expanded: boolean) => void;
+}
+
+// Custom Logout Button Component
+function CustomLogoutButton({ isExpanded }: { isExpanded: boolean }) {
+	const router = useRouter();
+
+	const handleLogout = async () => {
+		const supabase = createClient();
+		await supabase.auth.signOut();
+		router.push('/auth/login');
+	};
+
+	return (
+		<button
+			onClick={handleLogout}
+			aria-label="Sign out"
+			className="group w-full flex items-center justify-center p-2 rounded-md bg-white/5 backdrop-blur-xl border border-white/20 hover:bg-white/10 hover:border-white/30 transition-all duration-500 ease-out backdrop-saturate-150"
+		>
+			<PiSignOutDuotone className={`shrink-0 transition-all duration-500 ease-out text-red-400 group-hover:text-red-300 ${
+				isExpanded ? "w-4 h-4" : "w-6 h-6"
+			}`} />
+			<span className={`transition-all duration-500 ease-out whitespace-nowrap font-semibold tracking-tight text-sm text-white overflow-hidden ${
+				isExpanded ? "ml-2 max-w-[8rem] opacity-100" : "ml-0 max-w-0 opacity-0"
+			}`}>
+				Sign out
+			</span>
+		</button>
+	);
 }
 
 export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
@@ -135,8 +164,22 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 				</ul>
 			</nav>
 
-			{/* Profile Section */}
-			<ProfileSection isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
+			{/* Logout Section */}
+			<div className="mt-auto mb-2 w-full px-2">
+				{/* Divider above Logout */}
+				{isExpanded ? (
+					<div className="w-full mb-3">
+						<div className="border-t-2 border-dotted border-white/20"></div>
+					</div>
+				) : (
+					<div className="w-full mb-4">
+						<div className="border-t border-gray-300/40"></div>
+					</div>
+				)}
+				
+				{/* Custom Logout Button matching sidebar style */}
+				<CustomLogoutButton isExpanded={isExpanded} />
+			</div>
 
 			{/* Toggle Button */}
 			<div className="mt-2 mb-2 w-full px-2">
