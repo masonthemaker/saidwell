@@ -147,6 +147,36 @@ export function useClients(): UseClientsReturn {
       }
 
       setClients(prev => [formattedClient, ...prev])
+
+      // If email provided, invite user as client admin
+      if (data.adminEmail?.trim()) {
+        try {
+          const response = await fetch('/api/invite-client-admin', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: data.adminEmail.trim(),
+              clientId: newClient.id,
+              clientName: newClient.name
+            })
+          })
+
+          if (!response.ok) {
+            const errorData = await response.json()
+            console.warn('Client created but invitation failed:', errorData.error)
+            setError(`Client created successfully, but invitation failed: ${errorData.error}`)
+          } else {
+            const result = await response.json()
+            console.log('Invitation sent successfully:', result.message)
+          }
+        } catch (inviteErr) {
+          console.warn('Client created but invitation failed:', inviteErr)
+          // Don't fail the whole operation
+        }
+      }
+
       return true
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create client')

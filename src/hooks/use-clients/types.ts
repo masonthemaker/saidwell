@@ -9,6 +9,7 @@ export type ClientOrg = {
 
 export type CreateClientData = {
   name: string
+  adminEmail?: string // Optional email to invite as client admin
 }
 
 export type UseClientsReturn = {
