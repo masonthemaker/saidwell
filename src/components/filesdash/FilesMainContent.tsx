@@ -4,38 +4,24 @@ import { useState } from "react";
 import FileUploadSection from "./FileUploadSection";
 import FilesList from "./FilesList";
 import ConfirmationModal from "@/components/ui/confirmation-modal";
+import { useFiles } from "@/hooks/use-files";
+import { useAuth } from "@/hooks/use-auth";
 
 interface FilesMainContentProps {
   isNavExpanded: boolean;
 }
 
 export default function FilesMainContent({ isNavExpanded }: FilesMainContentProps) {
-  const [files, setFiles] = useState([
-    {
-      id: "1",
-      name: "Product_Requirements_Document.pdf",
-      type: "PDF",
-      size: "2.4 MB",
-      uploadDate: "2 hours ago",
-      fileType: "document" as const
-    },
-    {
-      id: "2", 
-      name: "Marketing_Campaign_Images.zip",
-      type: "ZIP",
-      size: "15.7 MB",
-      uploadDate: "Yesterday",
-      fileType: "image" as const
-    },
-    {
-      id: "3",
-      name: "Meeting_Notes_Jan_2024.txt",
-      type: "TXT", 
-      size: "45 KB",
-      uploadDate: "3 days ago",
-      fileType: "text" as const
-    }
-  ]);
+  const { 
+    allFiles, 
+    isLoading, 
+    deleteFile, 
+    downloadFile,
+    totalSizeFormatted,
+    error 
+  } = useFiles();
+  
+  const { getCurrentClient, user } = useAuth();
 
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
@@ -55,12 +41,14 @@ export default function FilesMainContent({ isNavExpanded }: FilesMainContentProp
     });
   };
 
-  const confirmDeleteFile = () => {
+  const confirmDeleteFile = async () => {
     if (deleteModal.fileId) {
-      setFiles(prev => prev.filter(file => file.id !== deleteModal.fileId));
-      console.log(`Deleted file with ID: ${deleteModal.fileId}`);
-      // TODO: Implement actual file deletion when connected to backend
+      const success = await deleteFile(deleteModal.fileId);
+      if (success) {
+        console.log(`Deleted file with ID: ${deleteModal.fileId}`);
+      }
     }
+    closeDeleteModal();
   };
 
   const closeDeleteModal = () => {
@@ -70,6 +58,16 @@ export default function FilesMainContent({ isNavExpanded }: FilesMainContentProp
       fileName: null
     });
   };
+
+  // Transform file data to match FileItem interface
+  const transformedFiles = allFiles.map(file => ({
+    id: file.id,
+    name: file.name,
+    type: file.mime_type?.toUpperCase().split('/')[1] || 'FILE',
+    size: file.size_formatted,
+    uploadDate: file.uploaded_date_formatted,
+    fileType: file.file_type
+  }));
   return (
     <main 
       className={`
@@ -83,11 +81,29 @@ export default function FilesMainContent({ isNavExpanded }: FilesMainContentProp
       `}
     >
       <div className="space-y-6">
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-4">
+            <div className="text-red-300 text-sm">{error}</div>
+          </div>
+        )}
+        
         {/* Upload Section */}
         <FileUploadSection />
         
         {/* Files List */}
-        <FilesList files={files} onDeleteRequest={handleDeleteRequest} />
+        <FilesList 
+          files={transformedFiles} 
+          onDeleteRequest={handleDeleteRequest}
+          isLoading={isLoading}
+          totalSize={totalSizeFormatted}
+          onDownload={async (fileId: string) => {
+            const url = await downloadFile(fileId);
+            if (url) {
+              window.open(url, '_blank');
+            }
+          }}
+        />
       </div>
 
       {/* Delete Confirmation Modal - Rendered at main content level */}

@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { PiUploadDuotone, PiFileDuotone, PiCloudArrowUpDuotone } from "react-icons/pi";
+import { useFiles } from "@/hooks/use-files";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function FileUploadSection() {
   const [isDragOver, setIsDragOver] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const { uploadFile, isLoadingUpload, error } = useFiles();
+  const { user, getCurrentClient } = useAuth();
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -32,12 +35,40 @@ export default function FileUploadSection() {
   };
 
   const handleFileUpload = async (files: File[]) => {
-    setIsUploading(true);
-    // Simulate upload delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    console.log(`Uploading ${files.length} file(s):`, files.map(f => f.name));
-    setIsUploading(false);
-    // TODO: Implement actual file upload when connected to backend
+    if (!user) {
+      console.error('User not authenticated');
+      return;
+    }
+
+    const currentClient = getCurrentClient();
+    
+    // For now, we'll need to get company_id from the user's membership
+    // This is a simplified approach - in production you'd want better company/client handling
+    if (!currentClient?.company_id) {
+      console.error('No company context available');
+      return;
+    }
+
+    for (const file of files) {
+      console.log(`Uploading file: ${file.name}`);
+      
+      const result = await uploadFile(file, {
+        company_id: currentClient.company_id,
+        client_id: currentClient.id || null,
+        metadata: {
+          uploaded_via: 'drag_drop',
+          original_size: file.size,
+          upload_timestamp: new Date().toISOString()
+        },
+        tags: ['user_uploaded']
+      });
+
+      if (result) {
+        console.log(`Successfully uploaded: ${file.name}`);
+      } else {
+        console.error(`Failed to upload: ${file.name}`);
+      }
+    }
   };
 
   return (
@@ -58,7 +89,7 @@ export default function FileUploadSection() {
             ? 'border-[var(--color-main-accent)]/60 bg-[var(--color-main-accent)]/10' 
             : 'border-white/20 hover:border-white/30 hover:bg-white/5'
           }
-          ${isUploading ? 'pointer-events-none opacity-60' : 'cursor-pointer'}
+          ${isLoadingUpload ? 'pointer-events-none opacity-60' : 'cursor-pointer'}
         `}
       >
         <input
@@ -66,11 +97,11 @@ export default function FileUploadSection() {
           multiple
           onChange={handleFileSelect}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          disabled={isUploading}
+          disabled={isLoadingUpload}
         />
         
         <div className="flex flex-col items-center gap-4">
-          {isUploading ? (
+          {isLoadingUpload ? (
             <>
               <div className="p-4 bg-[var(--color-sky-blue)]/20 rounded-full">
                 <PiCloudArrowUpDuotone className="w-8 h-8 text-[var(--color-sky-blue)] animate-bounce" />
