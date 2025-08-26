@@ -2,10 +2,17 @@
 
 import { useState } from "react";
 import { PiUploadDuotone, PiFileDuotone, PiCloudArrowUpDuotone } from "react-icons/pi";
+import { useFiles } from "@/hooks/use-files";
+import { useAuth } from "@/hooks/use-auth";
 
-export default function FileUploadSection() {
+interface FileUploadSectionProps {
+  onUploadSuccess: () => Promise<void>;
+}
+
+export default function FileUploadSection({ onUploadSuccess }: FileUploadSectionProps) {
   const [isDragOver, setIsDragOver] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const { uploadFile, isLoadingUpload, error } = useFiles();
+  const { user, getCurrentClient, memberships, isOwner, isAdmin } = useAuth();
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -32,12 +39,58 @@ export default function FileUploadSection() {
   };
 
   const handleFileUpload = async (files: File[]) => {
-    setIsUploading(true);
-    // Simulate upload delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    console.log(`Uploading ${files.length} file(s):`, files.map(f => f.name));
-    setIsUploading(false);
-    // TODO: Implement actual file upload when connected to backend
+    if (!user) {
+      console.error('User not authenticated');
+      return;
+    }
+
+    const currentClient = getCurrentClient();
+    
+    // Handle both company users and client users
+    let company_id: string;
+    let client_id: string | null = null;
+    
+    if (currentClient) {
+      // Client user: has a current client context
+      company_id = currentClient.company_id;
+      client_id = currentClient.client_id;
+    } else if (memberships.length > 0) {
+      // Company user: use first membership for company context, keep files company-only
+      company_id = memberships[0].company_id;
+      client_id = null; // Company-only files
+    } else {
+      console.error('No company or client context available');
+      return;
+    }
+
+    let successCount = 0;
+    
+    for (const file of files) {
+      const result = await uploadFile(file, {
+        company_id: company_id,
+        client_id: client_id,
+        metadata: {
+          uploaded_via: 'drag_drop',
+          original_size: file.size,
+          upload_timestamp: new Date().toISOString()
+        },
+        tags: ['user_uploaded']
+      });
+
+      if (result) {
+        successCount++;
+      } else {
+        console.error(`Failed to upload: ${file.name}`);
+      }
+    }
+    
+    // Refresh files list if any uploads were successful
+    if (successCount > 0) {
+      // Add a small delay to ensure backend processing is complete
+      await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5 second delay
+      
+      await onUploadSuccess();
+    }
   };
 
   return (
@@ -58,7 +111,7 @@ export default function FileUploadSection() {
             ? 'border-[var(--color-main-accent)]/60 bg-[var(--color-main-accent)]/10' 
             : 'border-white/20 hover:border-white/30 hover:bg-white/5'
           }
-          ${isUploading ? 'pointer-events-none opacity-60' : 'cursor-pointer'}
+          ${isLoadingUpload ? 'pointer-events-none opacity-60' : 'cursor-pointer'}
         `}
       >
         <input
@@ -66,11 +119,11 @@ export default function FileUploadSection() {
           multiple
           onChange={handleFileSelect}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          disabled={isUploading}
+          disabled={isLoadingUpload}
         />
         
         <div className="flex flex-col items-center gap-4">
-          {isUploading ? (
+          {isLoadingUpload ? (
             <>
               <div className="p-4 bg-[var(--color-sky-blue)]/20 rounded-full">
                 <PiCloudArrowUpDuotone className="w-8 h-8 text-[var(--color-sky-blue)] animate-bounce" />
