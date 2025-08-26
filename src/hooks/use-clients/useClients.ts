@@ -12,6 +12,12 @@ export function useClients(): UseClientsReturn {
   const [isLoading, setIsLoading] = useState(true)
   const [clients, setClients] = useState<ClientOrg[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [hasLoaded, setHasLoaded] = useState(false)
+
+  // Memoize the access check to prevent unnecessary re-renders
+  const canAccessClients = useMemo(() => {
+    return roles.includes('owner') || roles.includes('admin') || roles.includes('member') || roles.includes('user')
+  }, [roles])
 
   const loadClients = useCallback(async () => {
     // Don't do anything while auth is still loading
@@ -26,7 +32,6 @@ export function useClients(): UseClientsReturn {
     }
 
     // Check if user has company access (same logic as sidebar)
-    const canAccessClients = roles.includes('owner') || roles.includes('admin') || roles.includes('member') || roles.includes('user')
     if (!canAccessClients) {
       router.push('/')
       return
@@ -66,14 +71,17 @@ export function useClients(): UseClientsReturn {
       }))
 
       setClients(formatted)
+      setHasLoaded(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error occurred')
       setClients([])
+      setHasLoaded(true)
     }
-  }, [supabase, user, roles, router, authLoading])
+  }, [supabase, user, canAccessClients, router, authLoading])
 
   const refresh = useCallback(async () => {
     setIsLoading(true)
+    setHasLoaded(false)
     try {
       await loadClients()
     } finally {
@@ -81,6 +89,7 @@ export function useClients(): UseClientsReturn {
     }
   }, [loadClients])
 
+  // Load data only once per user session
   useEffect(() => {
     const load = async () => {
       setIsLoading(true)
@@ -90,8 +99,18 @@ export function useClients(): UseClientsReturn {
         setIsLoading(false)
       }
     }
-    load()
-  }, [loadClients])
+    
+    // Only load if we haven't loaded for this user yet
+    if (user?.id && !hasLoaded && !authLoading) {
+      load()
+    } else if (!authLoading && !user) {
+      // Clear data if no user and auth is done loading
+      setClients([])
+      setError(null)
+      setIsLoading(false)
+      setHasLoaded(false)
+    }
+  }, [user?.id, authLoading, hasLoaded, loadClients])
 
   return {
     isLoading,
