@@ -18,6 +18,7 @@ export default function FilesMainContent({ isNavExpanded }: FilesMainContentProp
     deleteFile, 
     downloadFile,
     totalSizeFormatted,
+    refresh,
     error 
   } = useFiles();
   
@@ -46,6 +47,7 @@ export default function FilesMainContent({ isNavExpanded }: FilesMainContentProp
       const success = await deleteFile(deleteModal.fileId);
       if (success) {
         console.log(`Deleted file with ID: ${deleteModal.fileId}`);
+        // File list will automatically refresh due to useFiles hook re-rendering
       }
     }
     closeDeleteModal();
@@ -89,7 +91,7 @@ export default function FilesMainContent({ isNavExpanded }: FilesMainContentProp
         )}
         
         {/* Upload Section */}
-        <FileUploadSection />
+        <FileUploadSection onUploadSuccess={refresh} />
         
         {/* Files List */}
         <FilesList 

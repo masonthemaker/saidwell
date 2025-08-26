@@ -150,6 +150,7 @@ export function useFiles(): UseFilesReturn {
         file_path: filePath,
         company_id: data.company_id!,
         client_id: data.client_id || null,
+        uploaded_by: user.id, // Required by RLS policy
         metadata: data.metadata || {},
         tags: data.tags || []
       }

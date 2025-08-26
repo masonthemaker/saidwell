@@ -5,10 +5,14 @@ import { PiUploadDuotone, PiFileDuotone, PiCloudArrowUpDuotone } from "react-ico
 import { useFiles } from "@/hooks/use-files";
 import { useAuth } from "@/hooks/use-auth";
 
-export default function FileUploadSection() {
+interface FileUploadSectionProps {
+  onUploadSuccess: () => Promise<void>;
+}
+
+export default function FileUploadSection({ onUploadSuccess }: FileUploadSectionProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const { uploadFile, isLoadingUpload, error } = useFiles();
-  const { user, getCurrentClient } = useAuth();
+  const { user, getCurrentClient, memberships, isOwner, isAdmin } = useAuth();
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -42,19 +46,29 @@ export default function FileUploadSection() {
 
     const currentClient = getCurrentClient();
     
-    // For now, we'll need to get company_id from the user's membership
-    // This is a simplified approach - in production you'd want better company/client handling
-    if (!currentClient?.company_id) {
-      console.error('No company context available');
+    // Handle both company users and client users
+    let company_id: string;
+    let client_id: string | null = null;
+    
+    if (currentClient) {
+      // Client user: has a current client context
+      company_id = currentClient.company_id;
+      client_id = currentClient.client_id;
+    } else if (memberships.length > 0) {
+      // Company user: use first membership for company context, keep files company-only
+      company_id = memberships[0].company_id;
+      client_id = null; // Company-only files
+    } else {
+      console.error('No company or client context available');
       return;
     }
 
+    let successCount = 0;
+    
     for (const file of files) {
-      console.log(`Uploading file: ${file.name}`);
-      
       const result = await uploadFile(file, {
-        company_id: currentClient.company_id,
-        client_id: currentClient.id || null,
+        company_id: company_id,
+        client_id: client_id,
         metadata: {
           uploaded_via: 'drag_drop',
           original_size: file.size,
@@ -64,10 +78,18 @@ export default function FileUploadSection() {
       });
 
       if (result) {
-        console.log(`Successfully uploaded: ${file.name}`);
+        successCount++;
       } else {
         console.error(`Failed to upload: ${file.name}`);
       }
+    }
+    
+    // Refresh files list if any uploads were successful
+    if (successCount > 0) {
+      // Add a small delay to ensure backend processing is complete
+      await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5 second delay
+      
+      await onUploadSuccess();
     }
   };
 
