@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PiXDuotone, PiPlayDuotone, PiPauseDuotone, PiDownloadDuotone, PiClockDuotone, PiPhoneDuotone } from "react-icons/pi";
-import { CallRecordData } from "./CallRecord";
+import { CallWithDetails } from "@/hooks/use-calls";
 
 interface TranscriptMessage {
   id: string;
@@ -14,7 +14,7 @@ interface TranscriptMessage {
 interface CallRecordModalProps {
   isOpen: boolean;
   onClose: () => void;
-  record: CallRecordData | null;
+  record: CallWithDetails | null;
   transcript?: TranscriptMessage[];
 }
 
@@ -57,7 +57,6 @@ export default function CallRecordModal({ isOpen, onClose, record, transcript = 
 
   const handleDownload = () => {
     // TODO: Implement actual download functionality
-    console.log(`Downloading transcript for record ${record.id}`);
   };
 
   return (
@@ -80,17 +79,23 @@ export default function CallRecordModal({ isOpen, onClose, record, transcript = 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div className="flex items-center gap-2 text-white/60">
                   <PiClockDuotone className="w-4 h-4" />
-                  <span>Duration: {record.duration}</span>
+                  <span>Duration: {record.duration_display || `${Math.floor(record.duration_seconds / 60)}:${(record.duration_seconds % 60).toString().padStart(2, '0')}`}</span>
                 </div>
                 <div className="flex items-center gap-2 text-white/60">
                   <PiPhoneDuotone className="w-4 h-4" />
-                  <span>{record.type === 'Outbound' ? 'Client' : 'Caller'}: {record.caller}</span>
+                  <span>{record.type === 'Outbound' ? 'Client' : 'Caller'}: {record.caller_name || record.caller_phone || 'Unknown'}</span>
                 </div>
                 <div className="flex items-center gap-2 text-white/60">
-                  <span>Cost: {record.cost}</span>
+                  <span>Cost: {record.cost_display || `$${((record.cost_cents || 0) / 100).toFixed(2)}`}</span>
                 </div>
                 <div className="text-white/50">
-                  {record.date} • Agent: {record.agent}
+                  {new Date(record.created_at).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: 'numeric', 
+                    minute: '2-digit', 
+                    hour12: true 
+                  })} • Agent: {record.agent_name}
                 </div>
               </div>
             </div>
@@ -121,7 +126,7 @@ export default function CallRecordModal({ isOpen, onClose, record, transcript = 
               
               <div className="flex flex-col">
                 <div className="text-sm font-medium text-white/90">
-                  {isPlaying ? "Playing" : "Paused"} • {currentTime} / {record.duration}
+                  {isPlaying ? "Playing" : "Paused"} • {currentTime} / {record.duration_display || `${Math.floor(record.duration_seconds / 60)}:${(record.duration_seconds % 60).toString().padStart(2, '0')}`}
                 </div>
                 <div className="text-xs text-white/60">Call Recording Audio</div>
               </div>

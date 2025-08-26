@@ -1,90 +1,78 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PiPlayDuotone, PiDownloadDuotone, PiClockDuotone, PiPhoneDuotone, PiMagnifyingGlassDuotone } from "react-icons/pi";
 import DatePicker from "./DatePicker";
-import CallRecord, { CallRecordData } from "./CallRecord";
+import CallRecord from "./CallRecord";
 import CallRecordModal from "./CallRecordModal";
+import { useCalls, CallWithDetails } from "@/hooks/use-calls";
 
 export default function HistoryCallsFullPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("30 days");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [visibleRecords, setVisibleRecords] = useState(4);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<CallRecordData | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<CallWithDetails | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Use real calls hook
+  const { 
+    allCalls, 
+    summary, 
+    isLoading, 
+    error, 
+    totalCalls,
+    totalCost,
+    totalDuration 
+  } = useCalls();
 
   const timePeriods = [
     { label: "7 days", value: "7 days" },
     { label: "30 days", value: "30 days" },
-    { label: "3 months", value: "3 months" }
+    { label: "3 months", value: "3 months" },
+    { label: "All time", value: "all" }
   ];
 
-  const allCallRecords: CallRecordData[] = [
-    {
-      id: 1,
-      title: "Customer Support - Product Issue Resolution",
-      type: "Support",
-      status: "Resolved",
-      duration: "15:32",
-      caller: "+1 (555) 123-4567",
-      cost: "$12.45",
-      date: "Today, 2:30 PM",
-      agent: "Sarah Johnson"
-    },
-    {
-      id: 2,
-      title: "Outbound Sales Call - Follow Up Meeting",
-      type: "Outbound",
-      status: "Completed",
-      duration: "23:45",
-      caller: "+1 (555) 987-6543",
-      cost: "$18.92",
-      date: "Today, 1:45 PM",
-      agent: "Michael Chen"
-    },
-    {
-      id: 3,
-      title: "Front Desk - New Customer Onboarding",
-      type: "Front Desk",
-      status: "In Progress",
-      duration: "8:12",
-      caller: "+1 (555) 456-7890",
-      cost: "$6.78",
-      date: "Today, 12:15 PM",
-      agent: "Emma Rodriguez"
-    },
-    {
-      id: 4,
-      title: "Technical Support - System Integration Help",
-      type: "Support",
-      status: "Resolved",
-      duration: "31:07",
-      caller: "+1 (555) 111-2222",
-      cost: "$24.83",
-      date: "Yesterday, 4:20 PM",
-      agent: "David Kim"
-    },
-    {
-      id: 5,
-      title: "Sales Inquiry - Product Demo Request",
-      type: "Outbound",
-      status: "Scheduled",
-      duration: "12:34",
-      caller: "+1 (555) 333-4444",
-      cost: "$9.67",
-      date: "Yesterday, 2:15 PM",
-      agent: "Lisa Thompson"
+  // Filter and search calls
+  const filteredCalls = useMemo(() => {
+    let filtered = allCalls;
+    
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(call => 
+        call.title.toLowerCase().includes(query) ||
+        call.agent_name.toLowerCase().includes(query) ||
+        call.type.toLowerCase().includes(query) ||
+        call.status.toLowerCase().includes(query) ||
+        call.caller_name?.toLowerCase().includes(query) ||
+        call.caller_phone?.includes(query)
+      );
     }
-  ];
+    
+    // Date filter
+    if (selectedDate) {
+      const filterDate = new Date(selectedDate);
+      filtered = filtered.filter(call => {
+        const callDate = new Date(call.created_at);
+        return callDate.toDateString() === filterDate.toDateString();
+      });
+    }
+    
+    // Period filter
+    if (selectedPeriod !== "all") {
+      const now = new Date();
+      const days = selectedPeriod === "7 days" ? 7 : selectedPeriod === "30 days" ? 30 : 90;
+      const cutoff = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
+      
+      filtered = filtered.filter(call => new Date(call.created_at) >= cutoff);
+    }
+    
+    return filtered;
+  }, [allCalls, searchQuery, selectedDate, selectedPeriod]);
 
   const handleLoadMore = async () => {
-    setIsLoading(true);
-    // Simulate loading delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setVisibleRecords(prev => Math.min(prev + 2, allCallRecords.length));
-    setIsLoading(false);
+    setVisibleRecords(prev => Math.min(prev + 4, filteredCalls.length));
   };
 
   // Sample transcript data for the first call (Product Issue Resolution)
@@ -193,17 +181,16 @@ export default function HistoryCallsFullPage() {
     }
   ];
 
-  const handleViewRecord = (recordId: number) => {
-    const record = allCallRecords.find(r => r.id === recordId);
+  const handleViewRecord = (recordId: string) => {
+    const record = allCalls.find(r => r.id === recordId);
     if (record) {
       setSelectedRecord(record);
       setIsModalOpen(true);
     }
   };
 
-  const handleDownloadRecord = (recordId: number) => {
-    console.log(`Downloading record ${recordId}`);
-    // TODO: Implement download functionality when connected to database
+  const handleDownloadRecord = (recordId: string) => {
+    // TODO: Implement download functionality 
   };
 
   const handleCloseModal = () => {
@@ -211,9 +198,16 @@ export default function HistoryCallsFullPage() {
     setSelectedRecord(null);
   };
 
-  const getTranscriptForRecord = (recordId: number) => {
-    // Only return transcript for the first record (Product Issue Resolution)
-    return recordId === 1 ? sampleTranscript : [];
+  const getTranscriptForRecord = (recordId: string) => {
+    // Get transcript from the actual call record
+    const record = allCalls.find(r => r.id === recordId);
+    if (record?.transcript && Array.isArray(record.transcript)) {
+      return record.transcript;
+    }
+    
+    // Fallback to sample transcript for first call
+    const firstCall = allCalls[0];
+    return firstCall?.id === recordId ? sampleTranscript : [];
   };
 
   return (
@@ -229,10 +223,12 @@ export default function HistoryCallsFullPage() {
               Complete archive of all call recordings and details
             </p>
           </div>
-          <div className="text-right">
+                      <div className="text-right">
             <div className="text-sm text-white/50 mb-2">Total Cost</div>
-            <div className="text-3xl font-bold text-[var(--color-main-accent)] mb-1">$1,247.89</div>
-            <div className="text-xs text-white/50">This month</div>
+            <div className="text-3xl font-bold text-[var(--color-main-accent)] mb-1">
+              ${((totalCost || 0) / 100).toFixed(2)}
+            </div>
+            <div className="text-xs text-white/50">All time</div>
           </div>
         </div>
 
@@ -265,7 +261,7 @@ export default function HistoryCallsFullPage() {
                 <PiPhoneDuotone className="w-5 h-5 text-[var(--color-main-accent)]" />
               </div>
               <div>
-                <div className="text-lg font-semibold text-white/90">147</div>
+                <div className="text-lg font-semibold text-white/90">{totalCalls}</div>
                 <div className="text-xs text-white/50">Total Calls</div>
               </div>
             </div>
@@ -277,7 +273,9 @@ export default function HistoryCallsFullPage() {
                 <PiClockDuotone className="w-5 h-5 text-[var(--color-grassy-green)]" />
               </div>
               <div>
-                <div className="text-lg font-semibold text-white/90">42h 15m</div>
+                <div className="text-lg font-semibold text-white/90">
+                  {Math.floor((totalDuration || 0) / 3600)}h {Math.floor(((totalDuration || 0) % 3600) / 60)}m
+                </div>
                 <div className="text-xs text-white/50">Total Duration</div>
               </div>
             </div>
@@ -289,7 +287,7 @@ export default function HistoryCallsFullPage() {
                 <PiPlayDuotone className="w-5 h-5 text-[var(--color-sky-blue)]" />
               </div>
               <div>
-                <div className="text-lg font-semibold text-white/90">89%</div>
+                <div className="text-lg font-semibold text-white/90">{summary.success_rate}%</div>
                 <div className="text-xs text-white/50">Success Rate</div>
               </div>
             </div>
@@ -301,7 +299,9 @@ export default function HistoryCallsFullPage() {
                 <PiDownloadDuotone className="w-5 h-5 text-[var(--color-hover-pink)]" />
               </div>
               <div>
-                <div className="text-lg font-semibold text-white/90">$8.49</div>
+                <div className="text-lg font-semibold text-white/90">
+                  ${((summary.avg_cost_cents || 0) / 100).toFixed(2)}
+                </div>
                 <div className="text-xs text-white/50">Avg. Cost</div>
               </div>
             </div>
@@ -360,34 +360,55 @@ export default function HistoryCallsFullPage() {
           </div>
         </div>
         
-        <div className="space-y-4">
-          {allCallRecords.slice(0, visibleRecords).map((record) => (
-            <CallRecord 
-              key={record.id} 
-              record={record}
-              onView={handleViewRecord}
-              onDownload={handleDownloadRecord}
-            />
-          ))}
-        </div>
-        
-        {/* Load More Button */}
-        {visibleRecords < allCallRecords.length && (
-          <div className="mt-8 pt-6 border-t border-white/10">
-            <button 
-              onClick={handleLoadMore}
-              disabled={isLoading}
-              className="w-full py-3 text-sm text-white/70 hover:text-white hover:bg-white/5 rounded-lg border border-white/10 hover:border-white/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? "Loading..." : `Load more recordings (${allCallRecords.length - visibleRecords} remaining) →`}
-            </button>
+        {error && (
+          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-center">
+            Error loading calls: {error}
           </div>
         )}
         
-        {visibleRecords >= allCallRecords.length && (
-          <div className="mt-8 pt-6 border-t border-white/10 text-center">
-            <p className="text-sm text-white/50">All recordings loaded</p>
+        {isLoading && (
+          <div className="text-center py-8">
+            <div className="text-white/50">Loading calls...</div>
           </div>
+        )}
+        
+        {!isLoading && !error && filteredCalls.length === 0 && (
+          <div className="text-center py-8">
+            <div className="text-white/50">No calls found matching your criteria</div>
+          </div>
+        )}
+        
+        {!isLoading && !error && filteredCalls.length > 0 && (
+          <>
+            <div className="space-y-4">
+              {filteredCalls.slice(0, visibleRecords).map((record) => (
+                <CallRecord 
+                  key={record.id} 
+                  record={record}
+                  onView={handleViewRecord}
+                  onDownload={handleDownloadRecord}
+                />
+              ))}
+            </div>
+            
+            {/* Load More Button */}
+            {visibleRecords < filteredCalls.length && (
+              <div className="mt-8 pt-6 border-t border-white/10">
+                <button 
+                  onClick={handleLoadMore}
+                  className="w-full py-3 text-sm text-white/70 hover:text-white hover:bg-white/5 rounded-lg border border-white/10 hover:border-white/20 transition-all duration-300"
+                >
+                  Load more recordings ({filteredCalls.length - visibleRecords} remaining) →
+                </button>
+              </div>
+            )}
+            
+            {visibleRecords >= filteredCalls.length && (
+              <div className="mt-8 pt-6 border-t border-white/10 text-center">
+                <p className="text-sm text-white/50">All recordings loaded</p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
