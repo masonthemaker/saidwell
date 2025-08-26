@@ -1,4 +1,4 @@
 export { useClients, default } from './useClients'
-export type { ClientOrg, UseClientsReturn } from './types'
+export type { ClientOrg, UseClientsReturn, CreateClientData } from './types'
 
 

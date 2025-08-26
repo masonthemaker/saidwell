@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useClients } from "@/hooks/use-clients";
 import { PiFirstAidDuotone, PiUsersDuotone, PiBuildingsDuotone, PiCalendarDuotone, PiDotsThreeCircleDuotone } from "react-icons/pi";
+import AddClientModal from "./AddClientModal";
 
 interface ClientsMainContentProps {
 	isNavExpanded: boolean;
@@ -18,7 +20,8 @@ function formatClientDate(dateString: string): string {
 }
 
 export default function ClientsMainContent({ isNavExpanded }: ClientsMainContentProps) {
-	const { isLoading, clients, error, refresh } = useClients();
+	const { isLoading, isCreating, clients, error, refresh, addClient } = useClients();
+	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const totalClients = clients.length;
 	const activeClients = clients.length; // For now, assume all are active
@@ -56,7 +59,10 @@ export default function ClientsMainContent({ isNavExpanded }: ClientsMainContent
 						>
 							Refresh
 						</button>
-						<button className="px-4 py-2 bg-[var(--color-main-accent)]/20 hover:bg-[var(--color-main-accent)]/30 border border-[var(--color-main-accent)]/30 hover:border-[var(--color-main-accent)]/50 rounded-xl text-[var(--color-main-accent)] text-sm font-medium transition-all duration-300 flex items-center gap-2">
+						<button 
+							onClick={() => setIsModalOpen(true)}
+							className="px-4 py-2 bg-[var(--color-main-accent)]/20 hover:bg-[var(--color-main-accent)]/30 border border-[var(--color-main-accent)]/30 hover:border-[var(--color-main-accent)]/50 rounded-xl text-[var(--color-main-accent)] text-sm font-medium transition-all duration-300 flex items-center gap-2"
+						>
 							<PiFirstAidDuotone className="w-4 h-4" />
 							Add Client
 						</button>
@@ -132,7 +138,10 @@ export default function ClientsMainContent({ isNavExpanded }: ClientsMainContent
 								</div>
 								<h3 className="text-lg font-medium text-white/80 mb-2">No clients yet</h3>
 								<p className="text-white/60 mb-4">Get started by adding your first client organization</p>
-								<button className="px-4 py-2 bg-[var(--color-main-accent)]/20 hover:bg-[var(--color-main-accent)]/30 border border-[var(--color-main-accent)]/30 hover:border-[var(--color-main-accent)]/50 rounded-xl text-[var(--color-main-accent)] text-sm font-medium transition-all duration-300 flex items-center gap-2">
+								<button 
+									onClick={() => setIsModalOpen(true)}
+									className="px-4 py-2 bg-[var(--color-main-accent)]/20 hover:bg-[var(--color-main-accent)]/30 border border-[var(--color-main-accent)]/30 hover:border-[var(--color-main-accent)]/50 rounded-xl text-[var(--color-main-accent)] text-sm font-medium transition-all duration-300 flex items-center gap-2"
+								>
 									<PiFirstAidDuotone className="w-4 h-4" />
 									Add Your First Client
 								</button>
@@ -187,6 +196,14 @@ export default function ClientsMainContent({ isNavExpanded }: ClientsMainContent
 						)}
 					</div>
 				</div>
+
+				{/* Add Client Modal */}
+				<AddClientModal
+					isOpen={isModalOpen}
+					onClose={() => setIsModalOpen(false)}
+					onSubmit={addClient}
+					isCreating={isCreating}
+				/>
 			</div>
 		</main>
 	);

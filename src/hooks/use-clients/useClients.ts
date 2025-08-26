@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
-import type { ClientOrg, UseClientsReturn } from './types'
+import type { ClientOrg, UseClientsReturn, CreateClientData } from './types'
 
 export function useClients(): UseClientsReturn {
   const supabase = useMemo(() => createClient(), [])
@@ -10,6 +10,7 @@ export function useClients(): UseClientsReturn {
   const router = useRouter()
 
   const [isLoading, setIsLoading] = useState(true)
+  const [isCreating, setIsCreating] = useState(false)
   const [clients, setClients] = useState<ClientOrg[]>([])
   const [error, setError] = useState<string | null>(null)
   const [hasLoaded, setHasLoaded] = useState(false)
@@ -89,6 +90,72 @@ export function useClients(): UseClientsReturn {
     }
   }, [loadClients])
 
+  const addClient = useCallback(async (data: CreateClientData): Promise<boolean> => {
+    if (!user || !canAccessClients) {
+      setError('Unauthorized to create clients')
+      return false
+    }
+
+    try {
+      setIsCreating(true)
+      setError(null)
+
+      // Get user's company ID from memberships
+      const { data: memberships, error: membershipError } = await supabase
+        .from('memberships')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single()
+
+      if (membershipError || !memberships) {
+        setError('Unable to determine company membership')
+        return false
+      }
+
+      // Create the client
+      const { data: newClient, error: createError } = await supabase
+        .from('clients')
+        .insert({
+          name: data.name.trim(),
+          company_id: memberships.company_id
+        })
+        .select(`
+          id,
+          name,
+          company_id,
+          created_at,
+          companies (
+            id,
+            name
+          )
+        `)
+        .single()
+
+      if (createError) {
+        setError(createError.message)
+        return false
+      }
+
+      // Add to local state
+      const formattedClient: ClientOrg = {
+        id: newClient.id,
+        name: newClient.name,
+        company_id: newClient.company_id,
+        company_name: newClient.companies?.name ?? '',
+        created_at: newClient.created_at,
+      }
+
+      setClients(prev => [formattedClient, ...prev])
+      return true
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create client')
+      return false
+    } finally {
+      setIsCreating(false)
+    }
+  }, [supabase, user, canAccessClients])
+
   // Load data only once per user session
   useEffect(() => {
     const load = async () => {
@@ -114,9 +181,11 @@ export function useClients(): UseClientsReturn {
 
   return {
     isLoading,
+    isCreating,
     clients,
     error,
     refresh,
+    addClient,
   }
 }
 

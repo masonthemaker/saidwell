@@ -7,11 +7,17 @@ export type ClientOrg = {
   updated_at?: string
 }
 
+export type CreateClientData = {
+  name: string
+}
+
 export type UseClientsReturn = {
   isLoading: boolean
+  isCreating: boolean
   clients: ClientOrg[]
   error: string | null
   refresh: () => Promise<void>
+  addClient: (data: CreateClientData) => Promise<boolean>
 }
 
 
