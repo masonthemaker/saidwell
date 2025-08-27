@@ -179,7 +179,7 @@ export default function ClientsMainContent({ isNavExpanded }: ClientsMainContent
 													)}
 													<div className="flex items-center gap-2">
 														<PiUsersDuotone className="w-4 h-4" />
-														<span>0 users</span> {/* Placeholder for user count */}
+														<span>{client.user_count ?? 0} user{(client.user_count ?? 0) !== 1 ? 's' : ''}</span>
 													</div>
 												</div>
 											</div>
