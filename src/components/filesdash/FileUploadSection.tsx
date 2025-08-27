@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { PiUploadDuotone, PiFileDuotone, PiCloudArrowUpDuotone } from "react-icons/pi";
 import { useFiles } from "@/hooks/use-files";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,6 +13,7 @@ export default function FileUploadSection({ onUploadSuccess }: FileUploadSection
   const [isDragOver, setIsDragOver] = useState(false);
   const { uploadFile, isLoadingUpload, error } = useFiles();
   const { user, getCurrentClient, memberships, isOwner, isAdmin } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -36,6 +37,10 @@ export default function FileUploadSection({ onUploadSuccess }: FileUploadSection
       const files = Array.from(e.target.files);
       handleFileUpload(files);
     }
+  };
+
+  const handleBrowseClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleFileUpload = async (files: File[]) => {
@@ -115,6 +120,7 @@ export default function FileUploadSection({ onUploadSuccess }: FileUploadSection
         `}
       >
         <input
+          ref={fileInputRef}
           type="file"
           multiple
           onChange={handleFileSelect}
@@ -155,12 +161,13 @@ export default function FileUploadSection({ onUploadSuccess }: FileUploadSection
 
       {/* Quick Upload Actions */}
       <div className="mt-4 flex flex-wrap gap-2">
-        <button className="px-4 py-2 bg-[var(--color-main-accent)]/20 text-[var(--color-main-accent)] border border-[var(--color-main-accent)]/30 rounded-lg text-sm font-medium hover:bg-[var(--color-main-accent)]/30 transition-all duration-300">
+        <button 
+          onClick={handleBrowseClick}
+          disabled={isLoadingUpload}
+          className={`px-4 py-2 bg-[var(--color-main-accent)]/20 text-[var(--color-main-accent)] border border-[var(--color-main-accent)]/30 rounded-lg text-sm font-medium hover:bg-[var(--color-main-accent)]/30 transition-all duration-300 ${isLoadingUpload ? 'opacity-60 cursor-not-allowed' : ''}`}
+        >
           <PiFileDuotone className="w-4 h-4 inline mr-2" />
           Browse Files
-        </button>
-        <button className="px-4 py-2 bg-white/10 text-white/80 border border-white/20 rounded-lg text-sm font-medium hover:bg-white/20 hover:border-white/30 transition-all duration-300">
-          Upload from URL
         </button>
       </div>
     </div>
