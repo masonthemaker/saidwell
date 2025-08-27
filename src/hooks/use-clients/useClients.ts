@@ -43,6 +43,7 @@ export function useClients(): UseClientsReturn {
       // RLS ensures:
       // - Company users (owner/admin/member) see all clients for their company/companies
       // - Other users see nothing unless permitted by policies
+      // - Company admins can now see user_clients via the new RLS policy
       const { data, error: queryError } = await supabase
         .from('clients')
         .select(`
@@ -53,6 +54,9 @@ export function useClients(): UseClientsReturn {
           companies (
             id,
             name
+          ),
+          user_clients (
+            user_id
           )
         `)
         .order('name', { ascending: true })
@@ -68,6 +72,7 @@ export function useClients(): UseClientsReturn {
         name: row.name,
         company_id: row.company_id,
         company_name: row.companies?.name ?? '',
+        user_count: row.user_clients?.length ?? 0,
         created_at: row.created_at,
       }))
 
@@ -128,6 +133,9 @@ export function useClients(): UseClientsReturn {
           companies (
             id,
             name
+          ),
+          user_clients (
+            user_id
           )
         `)
         .single()
@@ -142,7 +150,8 @@ export function useClients(): UseClientsReturn {
         id: newClient.id,
         name: newClient.name,
         company_id: newClient.company_id,
-        company_name: newClient.companies?.name ?? '',
+        company_name: (newClient.companies as any)?.name ?? '',
+        user_count: newClient.user_clients?.length ?? 0,
         created_at: newClient.created_at,
       }
 

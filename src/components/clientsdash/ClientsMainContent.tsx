@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useClients } from "@/hooks/use-clients";
 import { PiFirstAidDuotone, PiUsersDuotone, PiBuildingsDuotone, PiCalendarDuotone, PiDotsThreeCircleDuotone } from "react-icons/pi";
 import AddClientModal from "./AddClientModal";
+import ClientModal from "./ClientModal";
 
 interface ClientsMainContentProps {
 	isNavExpanded: boolean;
@@ -22,6 +23,13 @@ function formatClientDate(dateString: string): string {
 export default function ClientsMainContent({ isNavExpanded }: ClientsMainContentProps) {
 	const { isLoading, isCreating, clients, error, refresh, addClient } = useClients();
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+	const [selectedClient, setSelectedClient] = useState<typeof clients[0] | null>(null);
+
+	const handleClientClick = (client: typeof clients[0]) => {
+		setSelectedClient(client);
+		setIsClientModalOpen(true);
+	};
 
 	const totalClients = clients.length;
 	const activeClients = clients.length; // For now, assume all are active
@@ -151,6 +159,7 @@ export default function ClientsMainContent({ isNavExpanded }: ClientsMainContent
 								{clients.map((client) => (
 									<div 
 										key={client.id} 
+										onClick={() => handleClientClick(client)}
 										className="p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/8 hover:border-white/20 transition-all duration-300 cursor-pointer group"
 									>
 										<div className="flex items-center justify-between">
@@ -179,13 +188,16 @@ export default function ClientsMainContent({ isNavExpanded }: ClientsMainContent
 													)}
 													<div className="flex items-center gap-2">
 														<PiUsersDuotone className="w-4 h-4" />
-														<span>0 users</span> {/* Placeholder for user count */}
+														<span>{client.user_count ?? 0} user{(client.user_count ?? 0) !== 1 ? 's' : ''}</span>
 													</div>
 												</div>
 											</div>
 											
 											<div className="flex items-center gap-2 ml-4">
-												<button className="group/btn p-3 bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 hover:border-white/30 transition-all duration-300">
+												<button 
+													onClick={(e) => e.stopPropagation()}
+													className="group/btn p-3 bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 hover:border-white/30 transition-all duration-300"
+												>
 													<PiDotsThreeCircleDuotone className="w-5 h-5 text-white/70 group-hover/btn:text-white transition-colors" />
 												</button>
 											</div>
@@ -203,6 +215,13 @@ export default function ClientsMainContent({ isNavExpanded }: ClientsMainContent
 					onClose={() => setIsModalOpen(false)}
 					onSubmit={addClient}
 					isCreating={isCreating}
+				/>
+
+				{/* Client Details Modal */}
+				<ClientModal
+					isOpen={isClientModalOpen}
+					onClose={() => setIsClientModalOpen(false)}
+					client={selectedClient}
 				/>
 			</div>
 		</main>

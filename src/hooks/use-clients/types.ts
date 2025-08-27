@@ -3,6 +3,7 @@ export type ClientOrg = {
   name: string
   company_id: string
   company_name?: string
+  user_count?: number
   created_at?: string
   updated_at?: string
 }
