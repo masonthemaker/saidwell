@@ -13,6 +13,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 
@@ -49,8 +50,17 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <Card className="bg-white/3 backdrop-blur-xl backdrop-saturate-150 border border-white/10 rounded-2xl">
-        <CardHeader>
+      <Card className="bg-white/3 backdrop-blur-xl backdrop-saturate-150 border-2 border-dashed border-[var(--color-main-accent)]/40 rounded-2xl">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <Image
+              src="/saidwell.png"
+              alt="Saidwell Logo"
+              width={150}
+              height={50}
+              className="object-contain"
+            />
+          </div>
           <CardTitle className="text-2xl text-white/90">Login</CardTitle>
           <CardDescription className="text-white/60">Enter your email below to login to your account</CardDescription>
         </CardHeader>
