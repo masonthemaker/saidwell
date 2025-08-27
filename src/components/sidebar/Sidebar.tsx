@@ -3,6 +3,7 @@
 import { PiHouseDuotone, PiFolderSimpleDashedDuotone, PiLegoSmileyDuotone, PiClockCountdownDuotone, PiArrowFatLineLeftDuotone, PiArrowFatLineRightDuotone, PiSignOutDuotone, PiAddressBookDuotone } from "react-icons/pi";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import useAuth from "@/hooks/use-auth";
@@ -59,8 +60,14 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 		>
 			{isExpanded && (
 				<div className="w-full px-2 mb-4 flex justify-center">
-					<div aria-label="Logo">
-						<h1 className="text-xl font-semibold text-main-accent">LOGO</h1>
+					<div aria-label="Logo" className="flex items-center">
+						<Image
+							src="/saidwell.png"
+							alt="Saidwell Logo"
+							width={120}
+							height={40}
+							className="object-contain"
+						/>
 					</div>
 				</div>
 			)}
