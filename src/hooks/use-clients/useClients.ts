@@ -150,7 +150,7 @@ export function useClients(): UseClientsReturn {
         id: newClient.id,
         name: newClient.name,
         company_id: newClient.company_id,
-        company_name: newClient.companies?.name ?? '',
+        company_name: (newClient.companies as any)?.name ?? '',
         user_count: newClient.user_clients?.length ?? 0,
         created_at: newClient.created_at,
       }
