@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
-import type { TeamMember, UseTeamReturn } from './types';
+import type { TeamMember, UseTeamReturn, InviteUserData, InviteUserResponse } from './types';
 
 export function useTeam(): UseTeamReturn {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInviting, setIsInviting] = useState(false);
   
   const { user, memberships } = useAuth();
   const supabase = useMemo(() => createClient(), []);
@@ -118,6 +119,35 @@ export function useTeam(): UseTeamReturn {
     await fetchTeamMembers();
   }, [fetchTeamMembers]);
 
+  const inviteUser = useCallback(async (userData: InviteUserData): Promise<InviteUserResponse> => {
+    setIsInviting(true);
+    try {
+      const response = await fetch('/api/invite-company-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to invite user');
+      }
+
+      // Refresh the team members list after successful invitation
+      await fetchTeamMembers();
+
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to invite user';
+      throw new Error(errorMessage);
+    } finally {
+      setIsInviting(false);
+    }
+  }, [fetchTeamMembers]);
+
   useEffect(() => {
     // Small delay to debounce multiple rapid calls
     const timeoutId = setTimeout(() => {
@@ -132,6 +162,8 @@ export function useTeam(): UseTeamReturn {
     isLoading,
     error,
     refresh,
-    totalMembers: teamMembers.length
+    totalMembers: teamMembers.length,
+    inviteUser,
+    isInviting
   };
 }

@@ -9,10 +9,31 @@ export interface TeamMember {
   created_at: string;
 }
 
+export interface InviteUserData {
+  email: string;
+  role: 'admin' | 'member';
+}
+
+export interface InviteUserResponse {
+  success: boolean;
+  message: string;
+  user?: {
+    id: string;
+    email: string;
+    role: string;
+  };
+  credentials?: {
+    email: string;
+    password: string;
+  };
+}
+
 export interface UseTeamReturn {
   teamMembers: TeamMember[];
   isLoading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
   totalMembers: number;
+  inviteUser: (userData: InviteUserData) => Promise<InviteUserResponse>;
+  isInviting: boolean;
 }

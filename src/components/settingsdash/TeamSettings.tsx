@@ -6,9 +6,11 @@ import { useTeam } from "@/hooks/use-team";
 import type { TeamMember } from "@/hooks/use-team";
 
 export default function TeamSettings() {
-  const { teamMembers, isLoading, error, refresh, totalMembers } = useTeam();
+  const { teamMembers, isLoading, error, refresh, totalMembers, inviteUser, isInviting } = useTeam();
   const [newInviteEmail, setNewInviteEmail] = useState("");
   const [selectedRole, setSelectedRole] = useState<'admin' | 'member'>('member');
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
 
   const getRoleColor = (role: string) => {
     switch (role.toLowerCase()) {
@@ -49,10 +51,45 @@ export default function TeamSettings() {
     }
   };
 
-  const handleInviteUser = () => {
-    // TODO: Implement invitation functionality
-    console.log(`Would invite ${newInviteEmail} as ${selectedRole}`);
-    setNewInviteEmail("");
+  const handleInviteUser = async () => {
+    if (!newInviteEmail.trim()) {
+      setInviteError("Please enter an email address");
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newInviteEmail)) {
+      setInviteError("Please enter a valid email address");
+      return;
+    }
+
+    // Clear previous messages
+    setInviteError(null);
+    setInviteSuccess(null);
+
+    try {
+      const result = await inviteUser({
+        email: newInviteEmail.trim(),
+        role: selectedRole
+      });
+
+      if (result.success) {
+        setInviteSuccess(`Successfully invited ${newInviteEmail} as ${selectedRole}`);
+        setNewInviteEmail("");
+        
+        // Console log the credentials as requested
+        if (result.credentials) {
+          console.log('🎉 New company user invited:');
+          console.log('📧 Email:', result.credentials.email);
+          console.log('🔑 Password:', result.credentials.password);
+          console.log('👤 Role:', selectedRole);
+        }
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to invite user';
+      setInviteError(errorMessage);
+    }
   };
 
   const handleRemoveMember = (memberId: string) => {
@@ -137,10 +174,24 @@ export default function TeamSettings() {
       </div>
 
       <div className="space-y-6">
-        {/* Invite New Member - Disabled for now */}
-        <div className="p-4 bg-white/5 rounded-xl border border-white/10 opacity-60">
+        {/* Invite New Member */}
+        <div className="p-4 bg-white/5 rounded-xl border border-white/10">
           <h3 className="text-base font-medium text-white/90 mb-4">Invite Team Member</h3>
-          <p className="text-sm text-white/50 mb-4">Team invitations will be available soon.</p>
+          <p className="text-sm text-white/60 mb-4">Add new company users with admin or member roles.</p>
+          
+          {/* Success Message */}
+          {inviteSuccess && (
+            <div className="mb-4 p-3 bg-[var(--color-grassy-green)]/20 border border-[var(--color-grassy-green)]/30 rounded-lg">
+              <p className="text-[var(--color-grassy-green)] text-sm">{inviteSuccess}</p>
+            </div>
+          )}
+          
+          {/* Error Message */}
+          {inviteError && (
+            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+              <p className="text-red-300 text-sm">{inviteError}</p>
+            </div>
+          )}
           
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
@@ -148,16 +199,26 @@ export default function TeamSettings() {
                 type="email"
                 placeholder="Enter email address..."
                 value={newInviteEmail}
-                onChange={(e) => setNewInviteEmail(e.target.value)}
-                disabled
+                onChange={(e) => {
+                  setNewInviteEmail(e.target.value);
+                  // Clear messages when user starts typing
+                  if (inviteError) setInviteError(null);
+                  if (inviteSuccess) setInviteSuccess(null);
+                }}
+                disabled={isInviting}
                 className="w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-main-accent)]/50 focus:border-[var(--color-main-accent)]/40 transition-all duration-300 disabled:opacity-50"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleInviteUser();
+                  }
+                }}
               />
             </div>
             
             <select
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value as 'admin' | 'member')}
-              disabled
+              disabled={isInviting}
               className="appearance-none px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-main-accent)]/50 focus:border-[var(--color-main-accent)]/40 transition-all duration-300 [&>option]:bg-gray-800 [&>option]:text-white [&>option]:border-none disabled:opacity-50"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff60' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
@@ -172,11 +233,12 @@ export default function TeamSettings() {
             </select>
             
             <button
-              disabled
-              className="flex items-center gap-2 px-4 py-2.5 bg-[var(--color-main-accent)]/20 text-[var(--color-main-accent)] border border-[var(--color-main-accent)]/30 rounded-lg text-sm font-medium opacity-50 cursor-not-allowed"
+              onClick={handleInviteUser}
+              disabled={isInviting || !newInviteEmail.trim()}
+              className="flex items-center gap-2 px-4 py-2.5 bg-[var(--color-main-accent)]/20 hover:bg-[var(--color-main-accent)]/30 text-[var(--color-main-accent)] border border-[var(--color-main-accent)]/30 hover:border-[var(--color-main-accent)]/50 rounded-lg text-sm font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <PiPlusDuotone className="w-4 h-4" />
-              Invite
+              {isInviting ? 'Inviting...' : 'Invite'}
             </button>
           </div>
         </div>
