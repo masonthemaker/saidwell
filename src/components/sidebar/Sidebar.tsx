@@ -1,6 +1,6 @@
 "use client";
 
-import { PiHouseDuotone, PiFolderSimpleDashedDuotone, PiLegoSmileyDuotone, PiClockCountdownDuotone, PiArrowFatLineLeftDuotone, PiArrowFatLineRightDuotone, PiSignOutDuotone, PiAddressBookDuotone } from "react-icons/pi";
+import { PiHouseDuotone, PiFolderSimpleDashedDuotone, PiFinnTheHumanBold, PiClockCountdownDuotone, PiArrowFatLineLeftDuotone, PiArrowFatLineRightDuotone, PiSignOutDuotone, PiAddressBookDuotone, PiGearDuotone } from "react-icons/pi";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -49,6 +49,7 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 	const isClientsActive = pathname === "/clients";
 	const isFilesActive = pathname === "/files";
 	const isHistoryActive = pathname === "/history";
+	const isSettingsActive = pathname === "/settings";
 	
 	// Show agents link only for company users (owners, admins, members), not client users
 	const canAccessAgents = isOwner() || isAdmin() || isUser();
@@ -126,7 +127,7 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 								aria-label="Agents"
 								className={`group w-full flex items-center justify-center p-2 rounded-md bg-white/5 backdrop-blur-xl border border-white/20 hover:bg-white/10 hover:border-white/30 transition-all duration-500 ease-out backdrop-saturate-150`}
 							>
-								<PiLegoSmileyDuotone className={`shrink-0 transition-all duration-500 ease-out ${
+								<PiFinnTheHumanBold className={`shrink-0 transition-all duration-500 ease-out ${
 									isAgentsActive 
 										? "text-hover-pink" 
 										: "text-main-accent group-hover:text-hover-pink"
@@ -187,6 +188,24 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 							</span>
 						</Link>
 					</li>
+					{canAccessAgents && (
+						<li>
+							<Link
+								href="/settings"
+								aria-label="Settings"
+								className={`group w-full flex items-center justify-center p-2 rounded-md bg-white/5 backdrop-blur-xl border border-white/20 hover:bg-white/10 hover:border-white/30 transition-all duration-500 ease-out backdrop-saturate-150`}
+							>
+								<PiGearDuotone className={`shrink-0 transition-all duration-500 ease-out ${
+									isSettingsActive 
+										? "text-hover-pink" 
+										: "text-main-accent group-hover:text-hover-pink"
+								} ${isExpanded ? "w-4 h-4" : "w-6 h-6"}`} />
+								<span className={`transition-all duration-500 ease-out whitespace-nowrap font-semibold tracking-tight text-sm text-white overflow-hidden ${isExpanded ? "ml-2 max-w-[8rem] opacity-100" : "ml-0 max-w-0 opacity-0"}`}>
+									Settings
+								</span>
+							</Link>
+						</li>
+					)}
 				</ul>
 			</nav>
 
