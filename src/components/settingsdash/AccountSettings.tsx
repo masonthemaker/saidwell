@@ -1,15 +1,51 @@
 "use client";
 
 import { useState } from "react";
-import { PiUserDuotone, PiLockDuotone, PiEnvelopeDuotone, PiEyeDuotone, PiEyeSlashDuotone } from "react-icons/pi";
+import { PiUserDuotone, PiLockDuotone, PiEyeDuotone, PiEyeSlashDuotone } from "react-icons/pi";
+
+const PasswordInput = ({ 
+  value, 
+  onChange, 
+  placeholder, 
+  showPassword, 
+  onToggleVisibility,
+  disabled = false,
+  autoComplete
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  showPassword: boolean;
+  onToggleVisibility: () => void;
+  disabled?: boolean;
+  autoComplete?: string;
+}) => (
+  <div className="relative">
+    <input
+      type={showPassword ? "text" : "password"}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      disabled={disabled}
+      autoComplete={autoComplete}
+      className="w-full pr-10 pl-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-main-accent)]/50 focus:border-[var(--color-main-accent)]/40 transition-all duration-300 disabled:opacity-60"
+    />
+    <button
+      type="button"
+      onClick={onToggleVisibility}
+      disabled={disabled}
+      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors disabled:opacity-60"
+    >
+      {showPassword ? (
+        <PiEyeSlashDuotone className="w-4 h-4" />
+      ) : (
+        <PiEyeDuotone className="w-4 h-4" />
+      )}
+    </button>
+  </div>
+);
 
 export default function AccountSettings() {
-  const [emailSettings, setEmailSettings] = useState({
-    currentEmail: "user@company.com",
-    newEmail: "",
-    confirmEmail: ""
-  });
-
   const [passwordSettings, setPasswordSettings] = useState({
     currentPassword: "",
     newPassword: "",
@@ -19,166 +55,104 @@ export default function AccountSettings() {
     showConfirmPassword: false
   });
 
-  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-
-  const handleEmailChange = async () => {
-    if (emailSettings.newEmail !== emailSettings.confirmEmail) {
-      alert("Email addresses don't match!");
-      return;
-    }
-    
-    setIsUpdatingEmail(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    console.log(`Email change requested: ${emailSettings.currentEmail} → ${emailSettings.newEmail}`);
-    setEmailSettings({
-      currentEmail: emailSettings.newEmail,
-      newEmail: "",
-      confirmEmail: ""
-    });
-    setIsUpdatingEmail(false);
-    // TODO: Implement actual email change when connected to backend
-  };
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
 
   const handlePasswordReset = async () => {
+    // Clear previous messages
+    setPasswordError(null);
+    setPasswordSuccess(null);
+
+    // Validation
+    if (!passwordSettings.currentPassword.trim()) {
+      setPasswordError("Please enter your current password");
+      return;
+    }
+
+    if (!passwordSettings.newPassword.trim()) {
+      setPasswordError("Please enter a new password");
+      return;
+    }
+
     if (passwordSettings.newPassword !== passwordSettings.confirmPassword) {
-      alert("Passwords don't match!");
+      setPasswordError("New passwords don't match");
       return;
     }
     
     if (passwordSettings.newPassword.length < 8) {
-      alert("Password must be at least 8 characters long!");
+      setPasswordError("New password must be at least 8 characters long");
+      return;
+    }
+
+    if (passwordSettings.currentPassword === passwordSettings.newPassword) {
+      setPasswordError("New password must be different from current password");
       return;
     }
     
     setIsUpdatingPassword(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    console.log("Password reset requested");
-    setPasswordSettings({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-      showCurrentPassword: false,
-      showNewPassword: false,
-      showConfirmPassword: false
-    });
-    setIsUpdatingPassword(false);
-    // TODO: Implement actual password reset when connected to backend
+    try {
+      const response = await fetch('/api/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword: passwordSettings.currentPassword,
+          newPassword: passwordSettings.newPassword
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update password');
+      }
+
+      // Success!
+      setPasswordSuccess(result.message || 'Password updated successfully');
+      setPasswordSettings({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+        showCurrentPassword: false,
+        showNewPassword: false,
+        showConfirmPassword: false
+      });
+
+      // Clear success message after 5 seconds
+      setTimeout(() => setPasswordSuccess(null), 5000);
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update password';
+      setPasswordError(errorMessage);
+      // Clear error message after 7 seconds
+      setTimeout(() => setPasswordError(null), 7000);
+    } finally {
+      setIsUpdatingPassword(false);
+    }
   };
 
   const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
-    setPasswordSettings(prev => ({
-      ...prev,
-      [`show${field.charAt(0).toUpperCase() + field.slice(1)}Password`]: !prev[`show${field.charAt(0).toUpperCase() + field.slice(1)}Password` as keyof typeof prev]
-    }));
+    setPasswordSettings(prev => {
+      switch (field) {
+        case 'current':
+          return { ...prev, showCurrentPassword: !prev.showCurrentPassword };
+        case 'new':
+          return { ...prev, showNewPassword: !prev.showNewPassword };
+        case 'confirm':
+          return { ...prev, showConfirmPassword: !prev.showConfirmPassword };
+        default:
+          return prev;
+      }
+    });
   };
 
-  const PasswordInput = ({ 
-    value, 
-    onChange, 
-    placeholder, 
-    showPassword, 
-    onToggleVisibility,
-    disabled = false 
-  }: {
-    value: string;
-    onChange: (value: string) => void;
-    placeholder: string;
-    showPassword: boolean;
-    onToggleVisibility: () => void;
-    disabled?: boolean;
-  }) => (
-    <div className="relative">
-      <input
-        type={showPassword ? "text" : "password"}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        disabled={disabled}
-        className="w-full pr-10 pl-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-main-accent)]/50 focus:border-[var(--color-main-accent)]/40 transition-all duration-300 disabled:opacity-60"
-      />
-      <button
-        type="button"
-        onClick={onToggleVisibility}
-        disabled={disabled}
-        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors disabled:opacity-60"
-      >
-        {showPassword ? (
-          <PiEyeSlashDuotone className="w-4 h-4" />
-        ) : (
-          <PiEyeDuotone className="w-4 h-4" />
-        )}
-      </button>
-    </div>
-  );
+
 
   return (
     <div className="space-y-6">
-      {/* Change Email Section */}
-      <div className="bg-white/3 backdrop-blur-xl border border-white/5 backdrop-saturate-150 rounded-2xl p-6">
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-[var(--color-grassy-green)]/20 rounded-lg">
-              <PiEnvelopeDuotone className="w-5 h-5 text-[var(--color-grassy-green)]" />
-            </div>
-            <h2 className="text-xl font-semibold text-white/90">Change Email Address</h2>
-          </div>
-          <p className="text-sm text-white/60">Update your account email address</p>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">Current Email</label>
-            <input
-              type="email"
-              value={emailSettings.currentEmail}
-              disabled
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/60 text-sm opacity-60"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">New Email</label>
-              <input
-                type="email"
-                value={emailSettings.newEmail}
-                onChange={(e) => setEmailSettings(prev => ({ ...prev, newEmail: e.target.value }))}
-                placeholder="Enter new email address"
-                disabled={isUpdatingEmail}
-                className="w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-main-accent)]/50 focus:border-[var(--color-main-accent)]/40 transition-all duration-300 disabled:opacity-60"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">Confirm New Email</label>
-              <input
-                type="email"
-                value={emailSettings.confirmEmail}
-                onChange={(e) => setEmailSettings(prev => ({ ...prev, confirmEmail: e.target.value }))}
-                placeholder="Confirm new email address"
-                disabled={isUpdatingEmail}
-                className="w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-main-accent)]/50 focus:border-[var(--color-main-accent)]/40 transition-all duration-300 disabled:opacity-60"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-4 border-t border-white/10">
-            <button
-              onClick={handleEmailChange}
-              disabled={!emailSettings.newEmail || !emailSettings.confirmEmail || isUpdatingEmail}
-              className="px-6 py-2.5 bg-[var(--color-grassy-green)]/20 hover:bg-[var(--color-grassy-green)]/40 text-[var(--color-grassy-green)] border border-[var(--color-grassy-green)]/30 hover:border-[var(--color-grassy-green)]/60 rounded-lg text-sm font-medium transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {isUpdatingEmail ? "Updating..." : "Update Email"}
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Reset Password Section */}
       <div className="bg-white/3 backdrop-blur-xl border border-white/5 backdrop-saturate-150 rounded-2xl p-6">
         <div className="mb-6">
@@ -191,16 +165,42 @@ export default function AccountSettings() {
           <p className="text-sm text-white/60">Change your account password for better security</p>
         </div>
 
-        <div className="space-y-4">
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            handlePasswordReset();
+          }}
+          className="space-y-4"
+        >
+          {/* Success Message */}
+          {passwordSuccess && (
+            <div className="p-3 bg-[var(--color-grassy-green)]/20 border border-[var(--color-grassy-green)]/30 rounded-lg">
+              <p className="text-[var(--color-grassy-green)] text-sm">{passwordSuccess}</p>
+            </div>
+          )}
+          
+          {/* Error Message */}
+          {passwordError && (
+            <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+              <p className="text-red-300 text-sm">{passwordError}</p>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-white/80 mb-2">Current Password</label>
             <PasswordInput
               value={passwordSettings.currentPassword}
-              onChange={(value) => setPasswordSettings(prev => ({ ...prev, currentPassword: value }))}
+              onChange={(value) => {
+                setPasswordSettings(prev => ({ ...prev, currentPassword: value }));
+                // Clear messages when user starts typing
+                if (passwordError) setPasswordError(null);
+                if (passwordSuccess) setPasswordSuccess(null);
+              }}
               placeholder="Enter current password"
               showPassword={passwordSettings.showCurrentPassword}
               onToggleVisibility={() => togglePasswordVisibility('current')}
               disabled={isUpdatingPassword}
+              autoComplete="current-password"
             />
           </div>
 
@@ -209,11 +209,17 @@ export default function AccountSettings() {
               <label className="block text-sm font-medium text-white/80 mb-2">New Password</label>
               <PasswordInput
                 value={passwordSettings.newPassword}
-                onChange={(value) => setPasswordSettings(prev => ({ ...prev, newPassword: value }))}
+                onChange={(value) => {
+                  setPasswordSettings(prev => ({ ...prev, newPassword: value }));
+                  // Clear messages when user starts typing
+                  if (passwordError) setPasswordError(null);
+                  if (passwordSuccess) setPasswordSuccess(null);
+                }}
                 placeholder="Enter new password"
                 showPassword={passwordSettings.showNewPassword}
                 onToggleVisibility={() => togglePasswordVisibility('new')}
                 disabled={isUpdatingPassword}
+                autoComplete="new-password"
               />
               <p className="text-xs text-white/50 mt-1">Minimum 8 characters required</p>
             </div>
@@ -222,11 +228,17 @@ export default function AccountSettings() {
               <label className="block text-sm font-medium text-white/80 mb-2">Confirm New Password</label>
               <PasswordInput
                 value={passwordSettings.confirmPassword}
-                onChange={(value) => setPasswordSettings(prev => ({ ...prev, confirmPassword: value }))}
+                onChange={(value) => {
+                  setPasswordSettings(prev => ({ ...prev, confirmPassword: value }));
+                  // Clear messages when user starts typing
+                  if (passwordError) setPasswordError(null);
+                  if (passwordSuccess) setPasswordSuccess(null);
+                }}
                 placeholder="Confirm new password"
                 showPassword={passwordSettings.showConfirmPassword}
                 onToggleVisibility={() => togglePasswordVisibility('confirm')}
                 disabled={isUpdatingPassword}
+                autoComplete="new-password"
               />
             </div>
           </div>
@@ -262,14 +274,14 @@ export default function AccountSettings() {
 
           <div className="flex justify-end pt-4 border-t border-white/10">
             <button
-              onClick={handlePasswordReset}
+              type="submit"
               disabled={!passwordSettings.currentPassword || !passwordSettings.newPassword || !passwordSettings.confirmPassword || isUpdatingPassword}
               className="px-6 py-2.5 bg-[var(--color-hover-pink)]/20 hover:bg-[var(--color-hover-pink)]/40 text-[var(--color-hover-pink)] border border-[var(--color-hover-pink)]/30 hover:border-[var(--color-hover-pink)]/60 rounded-lg text-sm font-medium transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isUpdatingPassword ? "Updating..." : "Reset Password"}
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

@@ -1,6 +1,5 @@
 "use client";
 
-import BudgetSettings from "./BudgetSettings";
 import TeamSettings from "./TeamSettings";
 import AccountSettings from "./AccountSettings";
 
@@ -22,9 +21,6 @@ export default function SettingsMainContent({ isNavExpanded }: SettingsMainConte
       `}
     >
       <div className="space-y-6">
-        {/* Budget Alert Settings */}
-        <BudgetSettings />
-        
         {/* Team Settings */}
         <TeamSettings />
         
