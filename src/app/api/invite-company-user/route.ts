@@ -58,6 +58,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Note: We're creating the user immediately, so they'll appear in the team members list
+    // with "Invited" status until they log in. No need to track in invitations table.
+
     // Generate random password
     const randomPassword = generateRandomPassword()
 

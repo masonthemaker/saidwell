@@ -6,13 +6,33 @@ import { useTeam } from "@/hooks/use-team";
 import type { TeamMember } from "@/hooks/use-team";
 
 export default function TeamSettings() {
-  const { teamMembers, isLoading, error, refresh, totalMembers, inviteUser, isInviting, changeUserRole, isChangingRole } = useTeam();
+  const { 
+    teamMembers, 
+    pendingInvitations, 
+    isLoading, 
+    error, 
+    refresh, 
+    totalMembers, 
+    totalPendingInvitations,
+    inviteUser, 
+    isInviting, 
+    changeUserRole, 
+    isChangingRole,
+    cancelInvitation,
+    isCancellingInvitation,
+    removeMember,
+    isRemovingMember
+  } = useTeam();
   const [newInviteEmail, setNewInviteEmail] = useState("");
   const [selectedRole, setSelectedRole] = useState<'admin' | 'member'>('member');
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
   const [roleChangeError, setRoleChangeError] = useState<string | null>(null);
   const [roleChangeSuccess, setRoleChangeSuccess] = useState<string | null>(null);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [cancelSuccess, setCancelSuccess] = useState<string | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
+  const [removeSuccess, setRemoveSuccess] = useState<string | null>(null);
 
   const getRoleColor = (role: string) => {
     switch (role.toLowerCase()) {
@@ -44,6 +64,8 @@ export default function TeamSettings() {
     switch (status) {
       case 'Active':
         return 'bg-[var(--color-grassy-green)]/20 text-[var(--color-grassy-green)] border-[var(--color-grassy-green)]/30';
+      case 'Invited':
+        return 'bg-red-500/20 text-red-400 border-red-500/30';
       case 'Pending':
         return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
       case 'Inactive':
@@ -94,9 +116,53 @@ export default function TeamSettings() {
     }
   };
 
-  const handleRemoveMember = (memberId: string) => {
-    // TODO: Implement member removal functionality
-    console.log(`Would remove member ${memberId}`);
+  const handleRemoveMember = async (memberId: string, memberName: string) => {
+    // Simple confirmation - in a real app you might want a proper modal
+    const confirmed = window.confirm(
+      `Are you sure you want to remove ${memberName} from the team? This action cannot be undone.`
+    );
+    
+    if (!confirmed) return;
+
+    // Clear previous messages
+    setRemoveError(null);
+    setRemoveSuccess(null);
+
+    try {
+      const result = await removeMember({ userId: memberId });
+
+      if (result.success) {
+        setRemoveSuccess(result.message);
+        // Clear success message after 3 seconds
+        setTimeout(() => setRemoveSuccess(null), 3000);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to remove member';
+      setRemoveError(errorMessage);
+      // Clear error message after 5 seconds
+      setTimeout(() => setRemoveError(null), 5000);
+    }
+  };
+
+  const handleCancelInvitation = async (invitationId: string) => {
+    // Clear previous messages
+    setCancelError(null);
+    setCancelSuccess(null);
+
+    try {
+      const result = await cancelInvitation({ invitationId });
+
+      if (result.success) {
+        setCancelSuccess(result.message);
+        // Clear success message after 3 seconds
+        setTimeout(() => setCancelSuccess(null), 3000);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to cancel invitation';
+      setCancelError(errorMessage);
+      // Clear error message after 5 seconds
+      setTimeout(() => setCancelError(null), 5000);
+    }
   };
 
   const handleRoleChange = async (memberId: string, newRole: 'admin' | 'member') => {
@@ -278,12 +344,26 @@ export default function TeamSettings() {
             </div>
           )}
           
-          {/* Role Change Error Message */}
-          {roleChangeError && (
-            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
-              <p className="text-red-300 text-sm">{roleChangeError}</p>
-            </div>
-          )}
+                      {/* Role Change Error Message */}
+            {roleChangeError && (
+              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+                <p className="text-red-300 text-sm">{roleChangeError}</p>
+              </div>
+            )}
+            
+            {/* Remove Member Success Message */}
+            {removeSuccess && (
+              <div className="mb-4 p-3 bg-[var(--color-grassy-green)]/20 border border-[var(--color-grassy-green)]/30 rounded-lg">
+                <p className="text-[var(--color-grassy-green)] text-sm">{removeSuccess}</p>
+              </div>
+            )}
+            
+            {/* Remove Member Error Message */}
+            {removeError && (
+              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+                <p className="text-red-300 text-sm">{removeError}</p>
+              </div>
+            )}
           
           <div className="space-y-3">
             {teamMembers.map((member) => (
@@ -340,8 +420,10 @@ export default function TeamSettings() {
                     </select>
                     
                     <button
-                      onClick={() => handleRemoveMember(member.id)}
-                      className="p-2 bg-red-500/20 hover:bg-red-500/40 rounded-lg border border-red-500/30 hover:border-red-500/60 transition-all duration-300"
+                      onClick={() => handleRemoveMember(member.id, member.name)}
+                      disabled={isRemovingMember || member.role === 'owner'}
+                      className="p-2 bg-red-500/20 hover:bg-red-500/40 rounded-lg border border-red-500/30 hover:border-red-500/60 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={member.role === 'owner' ? 'Cannot remove company owner' : 'Remove team member'}
                     >
                       <PiTrashDuotone className="w-4 h-4 text-red-400" />
                     </button>
@@ -351,6 +433,80 @@ export default function TeamSettings() {
             ))}
           </div>
         </div>
+
+        {/* Pending Invitations */}
+        {totalPendingInvitations > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-white/90">Pending Invitations</h3>
+              <span className="text-sm text-white/50">{totalPendingInvitations} pending</span>
+            </div>
+            
+            {/* Cancel Success Message */}
+            {cancelSuccess && (
+              <div className="mb-4 p-3 bg-[var(--color-grassy-green)]/20 border border-[var(--color-grassy-green)]/30 rounded-lg">
+                <p className="text-[var(--color-grassy-green)] text-sm">{cancelSuccess}</p>
+              </div>
+            )}
+            
+            {/* Cancel Error Message */}
+            {cancelError && (
+              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+                <p className="text-red-300 text-sm">{cancelError}</p>
+              </div>
+            )}
+            
+            <div className="space-y-3">
+              {pendingInvitations.map((invitation) => (
+                <div key={invitation.id} className="p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/8 transition-all duration-300">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                        <PiEnvelopeDuotone className="w-5 h-5 text-yellow-400" />
+                      </div>
+                      
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="text-base font-medium text-white/90">{invitation.email}</h4>
+                          <span className="px-2 py-1 text-xs bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded-full">
+                            Pending
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-white/60">
+                          <span>Invited {new Date(invitation.created_at).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric',
+                            year: 'numeric' 
+                          })}</span>
+                          <span>•</span>
+                          <span>Expires {new Date(invitation.expires_at).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <span className={`px-2 py-1 text-xs border rounded-full ${getRoleColor(invitation.role)}`}>
+                        {getRoleDisplayName(invitation.role)}
+                      </span>
+                      
+                      <button
+                        onClick={() => handleCancelInvitation(invitation.id)}
+                        disabled={isCancellingInvitation}
+                        className="p-2 bg-red-500/20 hover:bg-red-500/40 rounded-lg border border-red-500/30 hover:border-red-500/60 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Cancel invitation"
+                      >
+                        <PiTrashDuotone className="w-4 h-4 text-red-400" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Role Permissions Info */}
         <div className="p-4 bg-white/5 rounded-xl border border-white/10">
