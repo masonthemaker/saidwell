@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
-import type { TeamMember, UseTeamReturn, InviteUserData, InviteUserResponse } from './types';
+import type { TeamMember, UseTeamReturn, InviteUserData, InviteUserResponse, ChangeRoleData, ChangeRoleResponse } from './types';
 
 export function useTeam(): UseTeamReturn {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isInviting, setIsInviting] = useState(false);
+  const [isChangingRole, setIsChangingRole] = useState(false);
   
   const { user, memberships } = useAuth();
   const supabase = useMemo(() => createClient(), []);
@@ -45,6 +46,8 @@ export function useTeam(): UseTeamReturn {
       // Fetch all team members for this company using the database function
       const { data: teamMembersData, error: teamMembersError } = await supabase
         .rpc('get_company_team_members', { company_uuid: currentCompanyId });
+
+
 
       if (teamMembersError) {
         console.error('Error fetching team members:', teamMembersError);
@@ -130,6 +133,42 @@ export function useTeam(): UseTeamReturn {
     }
   }, [fetchTeamMembers]);
 
+  const changeUserRole = useCallback(async (roleData: ChangeRoleData): Promise<ChangeRoleResponse> => {
+    if (!currentCompanyId) {
+      throw new Error('No company selected');
+    }
+
+    setIsChangingRole(true);
+    try {
+      const { data, error } = await supabase.rpc('change_user_role', {
+        target_user_id: roleData.userId,
+        new_role: roleData.newRole,
+        company_uuid: currentCompanyId
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to change role');
+      }
+
+      // Refresh the team members list after successful role change
+      await fetchTeamMembers();
+
+      return {
+        success: true,
+        message: data.message || `Role updated to ${roleData.newRole} successfully`
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to change role';
+      throw new Error(errorMessage);
+    } finally {
+      setIsChangingRole(false);
+    }
+  }, [currentCompanyId, supabase, fetchTeamMembers]);
+
   useEffect(() => {
     // Small delay to debounce multiple rapid calls
     const timeoutId = setTimeout(() => {
@@ -146,6 +185,8 @@ export function useTeam(): UseTeamReturn {
     refresh,
     totalMembers: teamMembers.length,
     inviteUser,
-    isInviting
+    isInviting,
+    changeUserRole,
+    isChangingRole
   };
 }

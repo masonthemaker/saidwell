@@ -28,6 +28,16 @@ export interface InviteUserResponse {
   };
 }
 
+export interface ChangeRoleData {
+  userId: string;
+  newRole: 'admin' | 'member';
+}
+
+export interface ChangeRoleResponse {
+  success: boolean;
+  message: string;
+}
+
 export interface UseTeamReturn {
   teamMembers: TeamMember[];
   isLoading: boolean;
@@ -36,4 +46,6 @@ export interface UseTeamReturn {
   totalMembers: number;
   inviteUser: (userData: InviteUserData) => Promise<InviteUserResponse>;
   isInviting: boolean;
+  changeUserRole: (roleData: ChangeRoleData) => Promise<ChangeRoleResponse>;
+  isChangingRole: boolean;
 }

@@ -6,11 +6,13 @@ import { useTeam } from "@/hooks/use-team";
 import type { TeamMember } from "@/hooks/use-team";
 
 export default function TeamSettings() {
-  const { teamMembers, isLoading, error, refresh, totalMembers, inviteUser, isInviting } = useTeam();
+  const { teamMembers, isLoading, error, refresh, totalMembers, inviteUser, isInviting, changeUserRole, isChangingRole } = useTeam();
   const [newInviteEmail, setNewInviteEmail] = useState("");
   const [selectedRole, setSelectedRole] = useState<'admin' | 'member'>('member');
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
+  const [roleChangeError, setRoleChangeError] = useState<string | null>(null);
+  const [roleChangeSuccess, setRoleChangeSuccess] = useState<string | null>(null);
 
   const getRoleColor = (role: string) => {
     switch (role.toLowerCase()) {
@@ -97,9 +99,28 @@ export default function TeamSettings() {
     console.log(`Would remove member ${memberId}`);
   };
 
-  const handleRoleChange = (memberId: string, newRole: 'admin' | 'member') => {
-    // TODO: Implement role change functionality
-    console.log(`Would change role for ${memberId} to ${newRole}`);
+  const handleRoleChange = async (memberId: string, newRole: 'admin' | 'member') => {
+    // Clear previous messages
+    setRoleChangeError(null);
+    setRoleChangeSuccess(null);
+
+    try {
+      const result = await changeUserRole({
+        userId: memberId,
+        newRole: newRole
+      });
+
+      if (result.success) {
+        setRoleChangeSuccess(result.message);
+        // Clear success message after 3 seconds
+        setTimeout(() => setRoleChangeSuccess(null), 3000);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to change role';
+      setRoleChangeError(errorMessage);
+      // Clear error message after 5 seconds
+      setTimeout(() => setRoleChangeError(null), 5000);
+    }
   };
 
   // Loading state
@@ -250,6 +271,20 @@ export default function TeamSettings() {
             <span className="text-sm text-white/50">{totalMembers} member{totalMembers !== 1 ? 's' : ''}</span>
           </div>
           
+          {/* Role Change Success Message */}
+          {roleChangeSuccess && (
+            <div className="mb-4 p-3 bg-[var(--color-grassy-green)]/20 border border-[var(--color-grassy-green)]/30 rounded-lg">
+              <p className="text-[var(--color-grassy-green)] text-sm">{roleChangeSuccess}</p>
+            </div>
+          )}
+          
+          {/* Role Change Error Message */}
+          {roleChangeError && (
+            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+              <p className="text-red-300 text-sm">{roleChangeError}</p>
+            </div>
+          )}
+          
           <div className="space-y-3">
             {teamMembers.map((member) => (
               <div key={member.id} className="p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/8 transition-all duration-300">
@@ -288,7 +323,8 @@ export default function TeamSettings() {
                     <select
                       value={member.role}
                       onChange={(e) => handleRoleChange(member.id, e.target.value as 'admin' | 'member')}
-                      className="appearance-none px-3 py-1 bg-white/5 border border-white/20 rounded-lg text-xs text-white/90 focus:outline-none focus:ring-1 focus:ring-[var(--color-main-accent)]/50 focus:border-[var(--color-main-accent)]/40 transition-all duration-300 [&>option]:bg-gray-800 [&>option]:text-white [&>option]:border-none"
+                      disabled={isChangingRole || member.role === 'owner'}
+                      className="appearance-none px-3 py-1 bg-white/5 border border-white/20 rounded-lg text-xs text-white/90 focus:outline-none focus:ring-1 focus:ring-[var(--color-main-accent)]/50 focus:border-[var(--color-main-accent)]/40 transition-all duration-300 [&>option]:bg-gray-800 [&>option]:text-white [&>option]:border-none disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{
                         backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff60' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
                         backgroundPosition: 'right 0.5rem center',
