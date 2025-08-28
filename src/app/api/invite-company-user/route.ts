@@ -82,7 +82,9 @@ export async function POST(request: NextRequest) {
       user_metadata: {
         invited_by: userData.user.id,
         company_id: companyMembership.company_id,
-        role: role
+        role: role,
+        full_name: email.split('@')[0], // Use email prefix as default name
+        name: email.split('@')[0] // Fallback name field
       }
     })
 

@@ -42,60 +42,42 @@ export function useTeam(): UseTeamReturn {
       setIsLoading(true);
       setError(null);
 
-      // Fetch all team members for this company
-      const { data: membershipsData, error: membershipsError } = await supabase
-        .from('memberships')
-        .select('user_id, role, created_at')
-        .eq('company_id', currentCompanyId)
-        .neq('role', 'client'); // Exclude client users
+      // Fetch all team members for this company using the database function
+      const { data: teamMembersData, error: teamMembersError } = await supabase
+        .rpc('get_company_team_members', { company_uuid: currentCompanyId });
 
-      if (membershipsError) {
-        console.error('Error fetching memberships:', membershipsError);
-        setError('Failed to load team memberships');
+      if (teamMembersError) {
+        console.error('Error fetching team members:', teamMembersError);
+        setError('Failed to load team members');
         setTeamMembers([]);
         setIsLoading(false);
         return;
       }
 
-      if (!membershipsData || membershipsData.length === 0) {
+      if (!teamMembersData || teamMembersData.length === 0) {
         setTeamMembers([]);
         setIsLoading(false);
         return;
       }
-
-      // For now, we'll create user data based on available info
-      // In a future version, this could be enhanced to fetch from a profiles table or auth metadata
-      const userData = membershipsData.map((m) => ({
-        id: m.user_id,
-        full_name: m.user_id === currentUserInfo.id ? currentUserInfo.name : null,
-        email: m.user_id === currentUserInfo.id ? currentUserInfo.email : null
-      }));
 
       // Transform the data to match our TeamMember interface
-      const formattedMembers: TeamMember[] = membershipsData.map((membership: any) => {
-        // Find corresponding user data
-        const userInfo = userData.find((u: any) => u.id === membership.user_id);
-        
-        const displayName = userInfo?.full_name || 
-                           (userInfo?.email ? userInfo.email.split('@')[0] : null) ||
-                           `${membership.role.charAt(0).toUpperCase() + membership.role.slice(1)} User`;
-
+      const formattedMembers: TeamMember[] = teamMembersData.map((member: any) => {
         return {
-          id: membership.user_id,
-          user_id: membership.user_id,
-          name: displayName,
-          email: userInfo?.email || 'Email not available',
-          role: membership.role as 'owner' | 'admin' | 'member',
+          id: member.user_id,
+          user_id: member.user_id,
+          name: member.full_name || member.email.split('@')[0] || 'Unknown User',
+          email: member.email || 'Email not available',
+          role: member.role as 'owner' | 'admin' | 'member',
           status: 'Active', // For now, assume all are active. Could be enhanced later
-          joinDate: new Date(membership.created_at).toLocaleDateString('en-US', { 
+          joinDate: new Date(member.created_at).toLocaleDateString('en-US', { 
             month: 'short', 
             year: 'numeric' 
           }),
-          created_at: membership.created_at
+          created_at: member.created_at
         };
       });
 
-      // Sort by role hierarchy: owner > admin > member
+      // The database function already sorts by role hierarchy, but let's ensure consistent sorting
       const roleOrder = { owner: 0, admin: 1, member: 2 };
       formattedMembers.sort((a, b) => {
         const aOrder = roleOrder[a.role] ?? 999;
