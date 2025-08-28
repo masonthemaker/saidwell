@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ImportAgentModal from "@/components/agentsdash/ImportAgentModal";
 
 interface AgentsMainContentProps {
   isNavExpanded: boolean;
@@ -21,6 +22,7 @@ export default function AgentsMainContent({ isNavExpanded }: AgentsMainContentPr
 
   const AgentsList = require("@/components/agentsdash/AgentsList").default;
   const [clientFilter, setClientFilter] = useState<string>("all");
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   const filteredAgents =
     clientFilter === "all"
@@ -66,7 +68,7 @@ export default function AgentsMainContent({ isNavExpanded }: AgentsMainContentPr
 
           <div>
             <button
-              onClick={() => {}}
+              onClick={() => setIsImportOpen(true)}
               className="px-4 py-2 border border-[var(--color-main-accent)]/30 rounded-lg bg-[var(--color-main-accent)]/10 hover:bg-[var(--color-main-accent)]/20 text-[var(--color-main-accent)] transition-all duration-300"
             >
               Import Agent
@@ -75,6 +77,12 @@ export default function AgentsMainContent({ isNavExpanded }: AgentsMainContentPr
         </div>
 
         <AgentsList agents={filteredAgents} clients={mockClients} />
+        <ImportAgentModal
+          isOpen={isImportOpen}
+          onClose={() => setIsImportOpen(false)}
+          onSelect={() => setIsImportOpen(false)}
+          providerStatus={{ vapi: "connected", retell: "disconnected", livekit: "disconnected" }}
+        />
       </div>
     </main>
   );
