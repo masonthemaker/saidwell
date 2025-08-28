@@ -186,10 +186,6 @@ export default function ClientsMainContent({ isNavExpanded }: ClientsMainContent
 															<span>Created: {formatClientDate(client.created_at)}</span>
 														</div>
 													)}
-													<div className="flex items-center gap-2">
-														<PiUsersDuotone className="w-4 h-4" />
-														<span>{client.user_count ?? 0} user{(client.user_count ?? 0) !== 1 ? 's' : ''}</span>
-													</div>
 												</div>
 											</div>
 											
