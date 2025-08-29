@@ -8,15 +8,30 @@ type Provider = "vapi" | "retell" | "livekit";
 interface ImportAgentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (provider: Provider) => void;
+  onSelect: (payload: { provider: Provider; agentId: string }) => void;
   providerStatus?: Partial<Record<Provider, "connected" | "disconnected">>;
 }
 
 export default function ImportAgentModal({ isOpen, onClose, onSelect, providerStatus }: ImportAgentModalProps) {
   const [provider, setProvider] = useState<Provider | null>(null);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   if (!isOpen) return null;
 
   const selectCard = (p: Provider) => setProvider(p);
+  const mockAgentsByProvider: Record<Provider, { id: string; name: string }[]> = {
+    vapi: [
+      { id: "vapi-1", name: "Vapi Front Desk" },
+      { id: "vapi-2", name: "Vapi Sales Outbound" },
+    ],
+    retell: [
+      { id: "retell-1", name: "Retell Concierge" },
+      { id: "retell-2", name: "Retell Support L1" },
+    ],
+    livekit: [
+      { id: "livekit-1", name: "LiveKit IVR" },
+      { id: "livekit-2", name: "LiveKit Scheduler" },
+    ],
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -107,6 +122,27 @@ export default function ImportAgentModal({ isOpen, onClose, onSelect, providerSt
               </div>
             </button>
           </div>
+          {provider && (
+            <div className="mt-4">
+              <div className="text-white/80 text-sm mb-2">Select an agent to import</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {mockAgentsByProvider[provider].map((a) => (
+                  <button
+                    key={a.id}
+                    onClick={() => setSelectedAgentId(a.id)}
+                    className={`p-3 rounded-lg border text-left transition-all duration-300 ${
+                      selectedAgentId === a.id
+                        ? "bg-[var(--color-main-accent)]/20 border-[var(--color-main-accent)]/50"
+                        : "bg-white/5 border-white/20 hover:bg-white/8 hover:border-white/30"
+                    }`}
+                  >
+                    <div className="text-white/90 text-sm font-medium">{a.name}</div>
+                    <div className="text-white/50 text-xs mt-0.5 truncate">{a.id}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -115,11 +151,11 @@ export default function ImportAgentModal({ isOpen, onClose, onSelect, providerSt
             Cancel
           </button>
           <button
-            onClick={() => provider && onSelect(provider)}
-            disabled={!provider}
+            onClick={() => provider && selectedAgentId && onSelect({ provider, agentId: selectedAgentId })}
+            disabled={!provider || !selectedAgentId}
             className="px-6 py-2 bg-[var(--color-main-accent)]/20 hover:bg-[var(--color-main-accent)]/30 border border-[var(--color-main-accent)]/30 hover:border-[var(--color-main-accent)]/50 rounded-xl text-[var(--color-main-accent)] font-medium transition-all duration-300 disabled:opacity-50"
           >
-            Continue
+            Import
           </button>
         </div>
       </div>
