@@ -5,7 +5,7 @@ export default function ParallaxBackground() {
     <div className="fixed bottom-0 left-0 w-full h-full pointer-events-none overflow-hidden">
       <div className="absolute bottom-0 left-0 w-full translate-y-[40%] scale-90">
         <Image
-          src="/background.png"
+          src="/background2.png"
           alt="Background"
           width={1920}
           height={800}
